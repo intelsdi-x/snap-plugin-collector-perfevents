@@ -11,7 +11,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestPSUtilPlugin(t *testing.T) {
+func TestPerfeventsPlugin(t *testing.T) {
 	Convey("Meta should return metadata for the plugin", t, func() {
 		meta := Meta()
 		So(meta.Name, ShouldResemble, name)
