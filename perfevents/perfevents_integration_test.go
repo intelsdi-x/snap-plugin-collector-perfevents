@@ -23,13 +23,9 @@ package perfevents
 
 import (
 	"errors"
-	"fmt"
-	"os"
-	"path"
 	"testing"
 
 	"github.com/intelsdi-x/pulse/control/plugin"
-	"github.com/intelsdi-x/pulse/plugin/helper"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
