@@ -2,7 +2,7 @@
 http://www.apache.org/licenses/LICENSE-2.0.txt
 
 
-Copyright 2015 Intel Coporation
+Copyright 2015 Intel Corporation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ const (
 	// Name of plugin
 	name = "perfevents"
 	// Version of plugin
-	version = 2
+	version = 3
 	// Type of plugin
 	pluginType = plugin.CollectorPluginType
 	// Namespace definition
@@ -155,7 +155,7 @@ func (p *Perfevents) CollectMetrics(mts []plugin.PluginMetricType) ([]plugin.Plu
 }
 
 // GetMetricTypes returns the metric types exposed by perf events subsystem
-func (p *Perfevents) GetMetricTypes() ([]plugin.PluginMetricType, error) {
+func (p *Perfevents) GetMetricTypes(_ plugin.PluginConfigType) ([]plugin.PluginMetricType, error) {
 	err := p.Init()
 	if err != nil {
 		return nil, err

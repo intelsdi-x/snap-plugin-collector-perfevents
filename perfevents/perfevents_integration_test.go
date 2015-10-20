@@ -4,7 +4,7 @@
 http://www.apache.org/licenses/LICENSE-2.0.txt
 
 
-Copyright 2015 Intel Coporation
+Copyright 2015 Intel Corporation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ func TestPerfEventsCollector(t *testing.T) {
 		p := NewPerfevents()
 		Convey("invalid init", func() {
 			p.Init = func() error { return errors.New("error") }
-			_, err := p.GetMetricTypes()
+			_, err := p.GetMetricTypes(plugin.PluginConfigType{})
 			So(err, ShouldNotBeNil)
 		})
 		Convey("set_supported_metrics", func() {
