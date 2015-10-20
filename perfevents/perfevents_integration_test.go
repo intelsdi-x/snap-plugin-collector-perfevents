@@ -34,7 +34,7 @@ func TestPerfEventsCollector(t *testing.T) {
 		p := NewPerfevents()
 		Convey("invalid init", func() {
 			p.Init = func() error { return errors.New("error") }
-			_, err := p.GetMetricTypes()
+			_, err := p.GetMetricTypes(plugin.PluginConfigType{})
 			So(err, ShouldNotBeNil)
 		})
 		Convey("set_supported_metrics", func() {
