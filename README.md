@@ -1,26 +1,6 @@
-<!--
-http://www.apache.org/licenses/LICENSE-2.0.txt
+# Pulse Perfevents Collector Plugin
 
-
-Copyright 2015 Intel Corporation
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
--->
-
-## Pulse Perf Events Collector Plugin
-
-# Description
-Collect following HW metrics for Cgroups from "perf" - Performance Counters for Linux:
+This plugin collects following hardware metrics for Cgroups from "perf" (Performance Counters for Linux):
 *  cycles
 *  instructions
 *  cache-references
@@ -31,26 +11,80 @@ Collect following HW metrics for Cgroups from "perf" - Performance Counters for 
 *  stalled-cycles-backend
 *  ref-cycles
 
- By default metrics are gathered once per second.
+Project link: https://github.com/intelsdi-x/pulse-plugin-collector-perfevents
 
-# Assumptions
-* "perf" - performance monitoring tool installed.
-* /proc/sys/kernel/perf_event_paranoid set to 0 (echo 0 > /proc/sys/kernel/perf_event_paranoid) 
-* Linux kernel version 2.6.31+
+1. [Getting Started](#getting-started)
+  * [System Requirements](#system-requirements)
+  * [Installation](#installation)
+  * [Configuration and Usage](configuration-and-usage)
+2. [Documentation](#documentation)
+  * [Collected Metrics](#collected-metrics)
+  * [Examples](#examples)
+  * [Roadmap](#roadmap)
+3. [Community Support](#community-support)
+4. [Contributing](#contributing)
+5. [License](#license-and-authors)
+6. [Acknowledgements](#acknowledgements)
 
-# Tips
-Creating sample cgroup for testing:
-* create sample process
-- dd if=/dev/zero of=/dev/null &
-- pid=$!
+## Getting Started
+In order to use this plugin you need "perf" to be installed on a Linux target host.
 
-* create cgroup and move process into cgroup
-- sudo cgcreate -g perf_event:A -g cpu:A -g cpuset:A -g cpuacct:A
-- sudo cgclassify -g perf_event:A -g cpu:A -g cpuacct:A $pid
-- sudo cgset -r cpuset.cpus=0-7 A
-- sudo cgset -r cpuset.mems=0 A
-- sudo cgclassify -g cpuset:A $pid
-- sudo cgset -r cpu.shares=20 A
+### System Requirements
 
-* list cgroup
-- lscgroup | grep perf_event
+* "perf" installed on a host
+* Linux kernel version at least 2.6.31
+* /proc/sys/kernel/perf_event_paranoid set to 0
+
+### Installation
+
+Plugin compilation
+```
+make
+```
+
+### Configuration and Usage
+
+* root previledges are required in order to run this plugin
+* this plugin was tested on Ubuntu 14.04
+
+## Documentation
+To learn more about metrics exposed by "perf" visit Perf wiki at: https://perf.wiki.kernel.org/index.php/Main_Page
+
+### Collected Metrics
+This plugin has the ability to gather the following metrics:
+
+Namespace | Data Type | Source | Description
+------------------|--------|-----------|-------------------------------
+/intel/linux/perfevents/cgroup/cycles/[GROUP_NAME] | float64 | hostname | Total cycles. Be wary of what happens during CPU frequency scaling.
+/intel/linux/perfevents/cgroup/instructions/[GROUP_NAME] | float64 | hostname | Retired instructions
+/intel/linux/perfevents/cgroup/cache-references/[GROUP_NAME] | float64 | hostname | Cache accesses. Usually this indicates Last Level Cache accesses but this may vary depending on your CPU. This may include prefetches and coherency messages; again this depends on the design of your CPU.
+/intel/linux/perfevents/cgroup/cache-misses/[GROUP_NAME] | float64 | hostname | Cache misses. Usually this indicates Last Level Cache misses; this is intended to be used in conjunction with the cache-references event to calculate cache miss rates.
+/intel/linux/perfevents/cgroup/branch-instructions/[GROUP_NAME] | float64 | hostname | Retired branch instructions
+/intel/linux/perfevents/cgroup/branch-misses/[GROUP_NAME] | float64 | hostname | Mispredicted branch instructions
+/intel/linux/perfevents/cgroup/stalled-cycles-frontend/[GROUP_NAME] | float64 | hostname | Stalled cycles during issue
+/intel/linux/perfevents/cgroup/stalled-cycles-backend/[GROUP_NAME] | float64 | hostname | Stalled cycles during retirement
+/intel/linux/perfevents/cgroup/ref-cycles/[GROUP_NAME] | float64 | hostname | Total cycles; not affected by CPU frequency scaling
+
+## Community Support
+This repository is one of **many** plugins in the **Pulse Framework**: a powerful telemetry agent framework. To reach out to other uses, reach out to us on:
+
+* Pulse Gitter channel (@TODO Link)
+* Our Google Group (@TODO Link)
+
+The full project is at http://github.com:intelsdi-x/pulse.
+
+## Contributing
+We love contributions! :heart_eyes:
+
+There's more than one way to give back, from examples to blogs to code updates. See our recommended process in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+Pulse, along with this plugin, is an Open Source software released under the Apache 2.0 [License](LICENSE).
+
+## Acknowledgements
+List authors, co-authors and anyone you'd like to mention
+
+* Author: [Andrzej Kuriata](https://github.com/andrzej-k)
+* Author: [Justin Guidroz](https://github.com/geauxvirtual)
+
+**Thank you!** Your contribution is incredibly important to us.
