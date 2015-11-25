@@ -2,7 +2,7 @@ Below is a default CONTRIBUTING.md file for all projects published under the [In
 
 Please open a PR if you think anything should change!
 
-# Pulse Perfevents Collector Plugin
+# Snap Perfevents Collector Plugin
 
 1. [Contributing Code](#contributing-code)
 2. [Contributing Examples](#contributing-examples)
@@ -38,11 +38,11 @@ If you have questions feel free to contact the [maintainers](README.md#maintaine
 ## Contributing Examples
 The most immediately helpful way you can benefit this project is by cloning the repository, adding some further examples and submitting a pull request.
 
-Have you written a blog post about how you use Pulse? Send it to us!
+Have you written a blog post about how you use Snap? Send it to us!
 
 
 ## Contribute Elsewhere
-This repository is one of **many** plugins in the **Pulse Framework**: a powerful telemetry agent framework. See the full project at http://github.com/intelsdi-x/pulse
+This repository is one of **many** plugins in the **Snap Framework**: a powerful telemetry agent framework. See the full project at http://github.com/intelsdi-x/snap
 
 ## Thank You
 And **thank you!** Your contribution is incredibly important to us.
