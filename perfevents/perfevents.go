@@ -30,8 +30,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/intelsdi-x/pulse/control/plugin"
-	"github.com/intelsdi-x/pulse/control/plugin/cpolicy"
+	"github.com/intelsdi-x/snap/control/plugin"
+	"github.com/intelsdi-x/snap/control/plugin/cpolicy"
 )
 
 const (
@@ -64,7 +64,7 @@ var CGROUP_EVENTS = []string{"cycles", "instructions", "cache-references", "cach
 	"stalled-cycles-backend", "ref-cycles"}
 
 func Meta() *plugin.PluginMeta {
-	return plugin.NewPluginMeta(name, version, pluginType, []string{plugin.PulseGOBContentType}, []string{plugin.PulseGOBContentType})
+	return plugin.NewPluginMeta(name, version, pluginType, []string{plugin.SnapGOBContentType}, []string{plugin.SnapGOBContentType})
 }
 
 // CollectMetrics returns HW metrics from perf events subsystem

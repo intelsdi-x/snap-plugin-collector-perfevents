@@ -66,7 +66,7 @@ Namespace | Data Type | Source | Description
 /intel/linux/perfevents/cgroup/ref-cycles/[GROUP_NAME] | float64 | hostname | Total cycles; not affected by CPU frequency scaling
 
 ## Community Support
-This repository is one of **many** plugins in the **Pulse Framework**: a powerful telemetry agent framework. To reach out to other uses, reach out to us on:
+This repository is one of **many** plugins in the **Snap Framework**: a powerful telemetry agent framework. To reach out to other uses, reach out to us on:
 
 * Snap Gitter channel (@TODO Link)
 * Our Google Group (@TODO Link)
