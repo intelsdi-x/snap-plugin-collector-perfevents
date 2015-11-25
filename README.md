@@ -1,4 +1,4 @@
-# Pulse Perfevents Collector Plugin
+# Snap Perfevents Collector Plugin
 
 This plugin collects following hardware metrics for Cgroups from "perf" (Performance Counters for Linux):
 *  cycles
@@ -11,7 +11,7 @@ This plugin collects following hardware metrics for Cgroups from "perf" (Perform
 *  stalled-cycles-backend
 *  ref-cycles
 
-Project link: https://github.com/intelsdi-x/pulse-plugin-collector-perfevents
+Project link: https://github.com/intelsdi-x/snap-plugin-collector-perfevents
 
 1. [Getting Started](#getting-started)
   * [System Requirements](#system-requirements)
@@ -68,10 +68,10 @@ Namespace | Data Type | Source | Description
 ## Community Support
 This repository is one of **many** plugins in the **Pulse Framework**: a powerful telemetry agent framework. To reach out to other uses, reach out to us on:
 
-* Pulse Gitter channel (@TODO Link)
+* Snap Gitter channel (@TODO Link)
 * Our Google Group (@TODO Link)
 
-The full project is at http://github.com:intelsdi-x/pulse.
+The full project is at http://github.com:intelsdi-x/snap.
 
 ## Contributing
 We love contributions! :heart_eyes:
@@ -79,7 +79,7 @@ We love contributions! :heart_eyes:
 There's more than one way to give back, from examples to blogs to code updates. See our recommended process in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
-Pulse, along with this plugin, is an Open Source software released under the Apache 2.0 [License](LICENSE).
+Snap, along with this plugin, is an Open Source software released under the Apache 2.0 [License](LICENSE).
 
 ## Acknowledgements
 List authors, co-authors and anyone you'd like to mention
