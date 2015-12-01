@@ -38,7 +38,7 @@ const (
 	// Name of plugin
 	name = "perfevents"
 	// Version of plugin
-	version = 4
+	version = 5
 	// Type of plugin
 	pluginType = plugin.CollectorPluginType
 	// Namespace definition
