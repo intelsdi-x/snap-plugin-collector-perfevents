@@ -1,4 +1,4 @@
-# Snap Perfevents Collector Plugin
+# snap collector plugin - Linux perf events
 
 This plugin collects following hardware metrics for Cgroups from "perf" (Performance Counters for Linux):
 *  cycles
@@ -11,44 +11,63 @@ This plugin collects following hardware metrics for Cgroups from "perf" (Perform
 *  stalled-cycles-backend
 *  ref-cycles
 
-Project link: https://github.com/intelsdi-x/snap-plugin-collector-perfevents
+This plugin is used in the [snap framework] (http://github.com/intelsdi-x/snap).
 
 1. [Getting Started](#getting-started)
   * [System Requirements](#system-requirements)
   * [Installation](#installation)
-  * [Configuration and Usage](configuration-and-usage)
+  * [Configuration and Usage](#configuration-and-usage)
 2. [Documentation](#documentation)
   * [Collected Metrics](#collected-metrics)
   * [Examples](#examples)
   * [Roadmap](#roadmap)
 3. [Community Support](#community-support)
 4. [Contributing](#contributing)
-5. [License](#license-and-authors)
+5. [License](#license)
 6. [Acknowledgements](#acknowledgements)
 
 ## Getting Started
-In order to use this plugin you need "perf" to be installed on a Linux target host.
+
+In order to use this plugin you need "perf" to be installed on a Linux target host.  
 
 ### System Requirements
 
+* root privileges
 * "perf" installed on a host
 * Linux kernel version at least 2.6.31
 * /proc/sys/kernel/perf_event_paranoid set to 0
+* [golang 1.4+](https://golang.org/dl/)
 
 ### Installation
 
-Plugin compilation
+#### Download perfevents plugin binary:
+You can get the pre-built binaries for your OS and architecture at snap's [GitHub Releases](https://github.com/intelsdi-x/snap/releases) page.
+
+#### To build the plugin binary:
+Fork https://github.com/intelsdi-x/snap-plugin-collector-perfevents
+Clone repo into `$GOPATH/src/github.com/intelsdi-x/`:
+
 ```
-make
+$ git clone https://github.com/<yourGithubID>/snap-plugin-collector-perfevents.git
 ```
+
+Build the plugin by running make within the cloned repo:
+```
+$ make
+```
+This builds the plugin in `/build/rootfs/`
 
 ### Configuration and Usage
-
-* root previledges are required in order to run this plugin
-* this plugin was tested on Ubuntu 14.04
-
+* Set up the [snap framework](https://github.com/intelsdi-x/snap/blob/master/README.md#getting-started)
+* Ensure `$SNAP_PATH` is exported  
+`export SNAP_PATH=$GOPATH/src/github.com/intelsdi-x/snap/build`
+ 
 ## Documentation
-To learn more about metrics exposed by "perf" visit Perf wiki at: https://perf.wiki.kernel.org/index.php/Main_Page
+
+To learn more about this plugin and Linux perf counters, visit:
+
+* [Linux perf events wiki] (https://perf.wiki.kernel.org/index.php/Main_Page)
+* [snap perfevents unit test](https://github.com/intelsdi-x/snap-plugin-collector-perfevents/blob/master/perfevents/perfevents_test.go)
 
 ### Collected Metrics
 This plugin has the ability to gather the following metrics:
@@ -65,26 +84,24 @@ Namespace | Data Type | Source | Description
 /intel/linux/perfevents/cgroup/stalled-cycles-backend/[GROUP_NAME] | float64 | hostname | Stalled cycles during retirement
 /intel/linux/perfevents/cgroup/ref-cycles/[GROUP_NAME] | float64 | hostname | Total cycles; not affected by CPU frequency scaling
 
+### Examples
+TBD
+
+### Roadmap
+There isn't a current roadmap for this plugin, but it is in active development. As we launch this plugin, we do not have any outstanding requirements for the next release. If you have a feature request, please add it as an [issue](https://github.com/intelsdi-x/snap-plugin-collector-perfevents/issues/new) and/or submit a [pull request](https://github.com/intelsdi-x/snap-plugin-collector-perfevents/pulls).
+
 ## Community Support
-This repository is one of **many** plugins in the **Snap Framework**: a powerful telemetry agent framework. To reach out to other uses, reach out to us on:
-
-* Snap Gitter channel (@TODO Link)
-* Our Google Group (@TODO Link)
-
-The full project is at http://github.com:intelsdi-x/snap.
+This repository is one of **many** plugins in **snap**, a powerful telemetry framework. See the full project at http://github.com/intelsdi-x/snap To reach out to other users, head to the [main framework](https://github.com/intelsdi-x/snap#community-support)
 
 ## Contributing
-We love contributions! :heart_eyes:
+We love contributions!
 
 There's more than one way to give back, from examples to blogs to code updates. See our recommended process in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
-Snap, along with this plugin, is an Open Source software released under the Apache 2.0 [License](LICENSE).
+[snap](http://github.com:intelsdi-x/snap), along with this plugin, is an Open Source software released under the Apache 2.0 [License](LICENSE).
 
 ## Acknowledgements
-List authors, co-authors and anyone you'd like to mention
+* Author: [@andrzej-k](https://github.com/andrzej-k)
 
-* Author: [Andrzej Kuriata](https://github.com/andrzej-k)
-* Author: [Justin Guidroz](https://github.com/geauxvirtual)
-
-**Thank you!** Your contribution is incredibly important to us.
+And **thank you!** Your contribution, through code and participation, is incredibly important to us.
