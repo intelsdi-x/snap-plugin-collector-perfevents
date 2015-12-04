@@ -85,7 +85,119 @@ Namespace | Data Type | Source | Description
 /intel/linux/perfevents/cgroup/ref-cycles/[GROUP_NAME] | float64 | hostname | Total cycles; not affected by CPU frequency scaling
 
 ### Examples
-TBD
+Example running perfevents, passthru processor, and writing data to a file.
+
+This is done from the snap directory.
+
+In one terminal window, open the snap daemon (in this case with logging set to 1 and trust disabled):
+```
+$ $SNAP_PATH/bin/snapd -l 1 -t 0
+```
+
+In another terminal window:
+Load perfevents plugin
+```
+$ $SNAP_PATH/bin/snapctl plugin load build/plugin/snap-collector-perfevents
+```
+See available metrics for your system
+```
+$ $SNAP_PATH/bin/snapctl metric list
+```
+
+Create a task manifest file (e.g. `perfevents-file.json`):    
+```json
+{
+    "version": 1,
+    "schedule": {
+        "type": "simple",
+        "interval": "1s"
+    },
+    "workflow": {
+        "collect": {
+            "metrics": {
+                "/intel/linux/perfevents/cgroup/branch-instructions/A" :{},
+                "/intel/linux/perfevents/cgroup/branch-misses/A": {},
+                "/intel/linux/perfevents/cgroup/cache-misses/A": {}
+            },
+            "config": {
+                "/intel/mock": {
+                    "password": "secret",
+                    "user": "root"
+                }
+            },
+            "process": [
+                {
+                    "plugin_name": "passthru",
+                    "process": null,
+                    "publish": [
+                        {
+                            "plugin_name": "file",
+                            "config": {
+                                "file": "/tmp/published_perfevents"
+                            }
+                        }
+                    ],
+                    "config": null
+                }
+            ],
+            "publish": null
+        }
+    }
+}
+```
+
+Load passthru plugin for processing:
+```
+$ $SNAP_PATH/bin/snapctl plugin load build/plugin/snap-processor-passthru
+Plugin loaded
+Name: passthru
+Version: 1
+Type: processor
+Signed: false
+Loaded Time: Wed, 02 Dec 2015 11:15:46 EST
+```
+
+Load file plugin for publishing:
+```
+$ $SNAP_PATH/bin/snapctl plugin load build/plugin/snap-publisher-file
+Plugin loaded
+Name: file
+Version: 3
+Type: publisher
+Signed: false
+Loaded Time: Wed, 02 Dec 2015 11:16:27 EST
+```
+
+Create task:
+```
+$ $SNAP_PATH/bin/snapctl task create -t examples/tasks/perfevents-file.json
+Using task manifest to create task
+Task created
+ID: 02dd7ff4-8106-47e9-8b86-70067cd0a850
+Name: Task-02dd7ff4-8106-47e9-8b86-70067cd0a850
+State: Running
+```
+
+See file output (this is just part of the file):
+```
+2015-12-02 11:17:25.400155315 -0500 EST|[intel linux perfevents cgroup branch-misses A]|8746|gklab-044-107
+2015-12-02 11:17:25.400176851 -0500 EST|[intel linux perfevents cgroup cache-misses A]|920|gklab-044-107
+2015-12-02 11:17:25.400182433 -0500 EST|[intel linux perfevents cgroup branch-instructions A]|1003127166|gklab-044-107
+2015-12-02 11:17:27.306543691 -0500 EST|[intel linux perfevents cgroup branch-misses A]|8824|gklab-044-107
+2015-12-02 11:17:27.306563423 -0500 EST|[intel linux perfevents cgroup cache-misses A]|987|gklab-044-107
+2015-12-02 11:17:27.30656858 -0500 EST|[intel linux perfevents cgroup branch-instructions A]|984027519|gklab-044-107
+2015-12-02 11:17:29.306252332 -0500 EST|[intel linux perfevents cgroup branch-misses A]|8003|gklab-044-107
+2015-12-02 11:17:29.306274722 -0500 EST|[intel linux perfevents cgroup cache-misses A]|910|gklab-044-107
+2015-12-02 11:17:29.306280418 -0500 EST|[intel linux perfevents cgroup branch-instructions A]|979076923|gklab-044-107
+2015-12-02 11:17:31.306634429 -0500 EST|[intel linux perfevents cgroup branch-misses A]|8968|gklab-044-107
+```
+
+Stop task:
+```
+$ $SNAP_PATH/bin/snapctl task stop 02dd7ff4-8106-47e9-8b86-70067cd0a850
+Task stopped:
+ID: 02dd7ff4-8106-47e9-8b86-70067cd0a850
+```
 
 ### Roadmap
 There isn't a current roadmap for this plugin, but it is in active development. As we launch this plugin, we do not have any outstanding requirements for the next release. If you have a feature request, please add it as an [issue](https://github.com/intelsdi-x/snap-plugin-collector-perfevents/issues/new) and/or submit a [pull request](https://github.com/intelsdi-x/snap-plugin-collector-perfevents/pulls).
