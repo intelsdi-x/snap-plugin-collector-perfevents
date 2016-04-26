@@ -36,7 +36,7 @@ In order to use this plugin you need "perf" to be installed on a Linux target ho
 * "perf" installed on a host
 * Linux kernel version at least 2.6.31
 * /proc/sys/kernel/perf_event_paranoid set to 0
-* [golang 1.4+](https://golang.org/dl/)
+* [golang 1.5+](https://golang.org/dl/) (needed only for building)
 
 ### Installation
 
