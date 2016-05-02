@@ -80,4 +80,12 @@ if [[ $TEST_SUITE == "unit" ]]; then
 	#         sleep 30
 	#     done
 	# fi
+
+elif [[ $TEST_SUITE == "integration" ]]; then
+	cd $SNAP_PLUGIN_SOURCE
+	if [[ $SNAP_PLUGIN_SOURCE == "" ]]; then
+	echo "env var SNAP_PLUGIN_SOURCE not set, should be location of snap-plugin-collector-perfevents"
+	exit 1
+	fi
+	go test -v --tags=integration ./...
 fi

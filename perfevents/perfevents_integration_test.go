@@ -26,43 +26,44 @@ import (
 	"testing"
 
 	"github.com/intelsdi-x/snap/control/plugin"
+	"github.com/intelsdi-x/snap/core"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestPerfEventsCollector(t *testing.T) {
 	Convey("GetMetricTypes functionality", t, func() {
-		p := NewPerfevents()
+		p := NewPerfeventsCollector()
 		Convey("invalid init", func() {
 			p.Init = func() error { return errors.New("error") }
-			_, err := p.GetMetricTypes(plugin.PluginConfigType{})
+			_, err := p.GetMetricTypes(plugin.ConfigType{})
 			So(err, ShouldNotBeNil)
 		})
 		Convey("set_supported_metrics", func() {
 			cg := []string{"cgroup1", "cgroup2", "cgroup3"}
 			events := []string{"event1", "event2", "event3"}
 			a := set_supported_metrics(ns_subtype, cg, events)
-			So(a[len(a)-1].Namespace_, ShouldResemble, []string{ns_vendor, ns_class, ns_type, ns_subtype, "event3", "cgroup3"})
+			So(a[len(a)-1].Namespace().Strings(), ShouldResemble, []string{ns_vendor, ns_class, ns_type, ns_subtype, "event3", "cgroup3"})
 		})
 		Convey("flatten cgroup name", func() {
 			cg := []string{"cg_root/cg_sub1/cg_sub2"}
 			events := []string{"event"}
 			a := set_supported_metrics(ns_subtype, cg, events)
-			So(a[len(a)-1].Namespace_, ShouldContain, "cg_root_cg_sub1_cg_sub2")
+			So(a[len(a)-1].Namespace().Strings(), ShouldContain, "cg_root_cg_sub1_cg_sub2")
 		})
 	})
 	Convey("CollectMetrics error cases", t, func() {
-		p := NewPerfevents()
+		p := NewPerfeventsCollector()
 		Convey("empty list of requested metrics", func() {
-			metricTypes := []plugin.PluginMetricType{}
+			metricTypes := []plugin.MetricType{}
 			metrics, err := p.CollectMetrics(metricTypes)
 			So(err, ShouldBeNil)
 			So(metrics, ShouldBeEmpty)
 		})
 		Convey("namespace too short", func() {
 			_, err := p.CollectMetrics(
-				[]plugin.PluginMetricType{
-					plugin.PluginMetricType{
-						Namespace_: []string{"invalid"},
+				[]plugin.MetricType{
+					plugin.MetricType{
+						Namespace_: core.NewNamespace("invalid"),
 					},
 				},
 			)
@@ -71,9 +72,9 @@ func TestPerfEventsCollector(t *testing.T) {
 		})
 		Convey("namespace wrong vendor", func() {
 			_, err := p.CollectMetrics(
-				[]plugin.PluginMetricType{
-					plugin.PluginMetricType{
-						Namespace_: []string{"invalid", ns_class, ns_type, ns_subtype, "cycles", "A"},
+				[]plugin.MetricType{
+					plugin.MetricType{
+						Namespace_: core.NewNamespace("invalid", ns_class, ns_type, ns_subtype, "cycles", "A"),
 					},
 				},
 			)
@@ -82,9 +83,9 @@ func TestPerfEventsCollector(t *testing.T) {
 		})
 		Convey("namespace wrong class", func() {
 			_, err := p.CollectMetrics(
-				[]plugin.PluginMetricType{
-					plugin.PluginMetricType{
-						Namespace_: []string{ns_vendor, "invalid", ns_type, ns_subtype, "cycles", "A"},
+				[]plugin.MetricType{
+					plugin.MetricType{
+						Namespace_: core.NewNamespace(ns_vendor, "invalid", ns_type, ns_subtype, "cycles", "A"),
 					},
 				},
 			)
@@ -93,9 +94,9 @@ func TestPerfEventsCollector(t *testing.T) {
 		})
 		Convey("namespace wrong type", func() {
 			_, err := p.CollectMetrics(
-				[]plugin.PluginMetricType{
-					plugin.PluginMetricType{
-						Namespace_: []string{ns_vendor, ns_class, "invalid", ns_subtype, "cycles", "A"},
+				[]plugin.MetricType{
+					plugin.MetricType{
+						Namespace_: core.NewNamespace(ns_vendor, ns_class, "invalid", ns_subtype, "cycles", "A"),
 					},
 				},
 			)
@@ -104,9 +105,9 @@ func TestPerfEventsCollector(t *testing.T) {
 		})
 		Convey("namespace wrong subtype", func() {
 			_, err := p.CollectMetrics(
-				[]plugin.PluginMetricType{
-					plugin.PluginMetricType{
-						Namespace_: []string{ns_vendor, ns_class, ns_type, "invalid", "cycles", "A"},
+				[]plugin.MetricType{
+					plugin.MetricType{
+						Namespace_: core.NewNamespace(ns_vendor, ns_class, ns_type, "invalid", "cycles", "A"),
 					},
 				},
 			)
@@ -115,9 +116,9 @@ func TestPerfEventsCollector(t *testing.T) {
 		})
 		Convey("namespace wrong event", func() {
 			_, err := p.CollectMetrics(
-				[]plugin.PluginMetricType{
-					plugin.PluginMetricType{
-						Namespace_: []string{ns_vendor, ns_class, ns_type, ns_subtype, "invalid", "A"},
+				[]plugin.MetricType{
+					plugin.MetricType{
+						Namespace_: core.NewNamespace(ns_vendor, ns_class, ns_type, ns_subtype, "invalid", "A"),
 					},
 				},
 			)
