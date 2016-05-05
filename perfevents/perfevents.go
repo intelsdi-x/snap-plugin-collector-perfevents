@@ -32,13 +32,14 @@ import (
 
 	"github.com/intelsdi-x/snap/control/plugin"
 	"github.com/intelsdi-x/snap/control/plugin/cpolicy"
+	"github.com/intelsdi-x/snap/core"
 )
 
 const (
 	// Name of plugin
 	name = "perfevents"
 	// Version of plugin
-	version = 6
+	version = 7
 	// Type of plugin
 	pluginType = plugin.CollectorPluginType
 	// Namespace definition
@@ -69,7 +70,7 @@ func Meta() *plugin.PluginMeta {
 
 // CollectMetrics returns HW metrics from perf events subsystem
 // for Cgroups present on the host.
-func (p *Perfevents) CollectMetrics(mts []plugin.PluginMetricType) ([]plugin.PluginMetricType, error) {
+func (p *Perfevents) CollectMetrics(mts []plugin.MetricType) ([]plugin.MetricType, error) {
 	if len(mts) == 0 {
 		return nil, nil
 	}
@@ -79,20 +80,20 @@ func (p *Perfevents) CollectMetrics(mts []plugin.PluginMetricType) ([]plugin.Plu
 	// Get list of events and cgroups from Namespace
 	// Replace "_" with "/" in cgroup name
 	for _, m := range mts {
-		err := validateNamespace(m.Namespace())
+		err := validateNamespace(m.Namespace().Strings())
 		if err != nil {
 			return nil, err
 		}
-		events = append(events, m.Namespace()[4])
-		cgroups = append(cgroups, strings.Replace(m.Namespace()[5], "_", "/", -1))
+		events = append(events, m.Namespace().Strings()[4])
+		cgroups = append(cgroups, strings.Replace(m.Namespace().Strings()[5], "_", "/", -1))
 	}
 
 	// Prepare events (-e) and Cgroups (-G) switches for "perf stat"
-	cgroups_switch := "-G" + strings.Join(cgroups, ",")
-	events_switch := "-e" + strings.Join(events, ",")
+	cgroupsSwitch := "-G" + strings.Join(cgroups, ",")
+	eventsSwitch := "-e" + strings.Join(events, ",")
 
 	// Prepare "perf stat" command
-	cmd := exec.Command("perf", "stat", "--log-fd", "1", `-x;`, "-a", events_switch, cgroups_switch, "--", "sleep", "1")
+	cmd := exec.Command("perf", "stat", "--log-fd", "1", `-x;`, "-a", eventsSwitch, cgroupsSwitch, "--", "sleep", "1")
 
 	cmdReader, err := cmd.StdoutPipe()
 	if err != nil {
@@ -140,22 +141,28 @@ func (p *Perfevents) CollectMetrics(mts []plugin.PluginMetricType) ([]plugin.Plu
 	}
 
 	// Populate metrics
-	metrics := make([]plugin.PluginMetricType, len(mts))
+	metrics := make([]plugin.MetricType, len(mts))
 	i := 0
 	for _, m := range mts {
+		hostname, _ := os.Hostname()
+		tags := m.Tags()
+		if tags == nil {
+			tags = map[string]string{}
+		}
+		tags["hostname"] = hostname
 		metric, err := populate_metric(m.Namespace(), p.cgroup_events[i])
 		if err != nil {
 			return nil, err
 		}
 		metrics[i] = *metric
-		metrics[i].Source_, _ = os.Hostname()
+		metrics[i].Tags_ = tags
 		i++
 	}
 	return metrics, nil
 }
 
 // GetMetricTypes returns the metric types exposed by perf events subsystem
-func (p *Perfevents) GetMetricTypes(_ plugin.PluginConfigType) ([]plugin.PluginMetricType, error) {
+func (p *Perfevents) GetMetricTypes(_ plugin.ConfigType) ([]plugin.MetricType, error) {
 	err := p.Init()
 	if err != nil {
 		return nil, err
@@ -167,7 +174,7 @@ func (p *Perfevents) GetMetricTypes(_ plugin.PluginConfigType) ([]plugin.PluginM
 	if len(cgroups) == 0 {
 		return nil, nil
 	}
-	mts := []plugin.PluginMetricType{}
+	mts := []plugin.MetricType{}
 	mts = append(mts, set_supported_metrics(ns_subtype, cgroups, CGROUP_EVENTS)...)
 
 	return mts, nil
@@ -209,11 +216,11 @@ func initialize() error {
 	return nil
 }
 
-func set_supported_metrics(source string, cgroups []string, events []string) []plugin.PluginMetricType {
-	mts := make([]plugin.PluginMetricType, len(events)*len(cgroups))
+func set_supported_metrics(source string, cgroups []string, events []string) []plugin.MetricType {
+	mts := make([]plugin.MetricType, len(events)*len(cgroups))
 	for _, e := range events {
 		for _, c := range flatten_cg_name(cgroups) {
-			mts = append(mts, plugin.PluginMetricType{Namespace_: []string{ns_vendor, ns_class, ns_type, source, e, c}})
+			mts = append(mts, plugin.MetricType{Namespace_: core.NewNamespace(ns_vendor, ns_class, ns_type, source, e, c)})
 		}
 	}
 	return mts
@@ -226,8 +233,8 @@ func flatten_cg_name(cg []string) []string {
 	return flat_cg
 }
 
-func populate_metric(ns []string, e event) (*plugin.PluginMetricType, error) {
-	return &plugin.PluginMetricType{
+func populate_metric(ns core.Namespace, e event) (*plugin.MetricType, error) {
+	return &plugin.MetricType{
 		Namespace_: ns,
 		Data_:      e.value,
 		Timestamp_: time.Now(),
