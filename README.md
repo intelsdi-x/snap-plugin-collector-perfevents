@@ -11,6 +11,8 @@ This plugin collects following hardware metrics for Cgroups from "perf" (Perform
 *  stalled-cycles-backend
 *  ref-cycles
 
+To see which of them are supported on your platform, please execute command `perf stat ls`.
+
 This plugin is used in the [snap framework] (http://github.com/intelsdi-x/snap).
 
 1. [Getting Started](#getting-started)
@@ -34,9 +36,11 @@ In order to use this plugin you need "perf" to be installed on a Linux target ho
 
 * root privileges
 * "perf" installed on a host
+* /proc/sys/kernel/perf_event_paranoid set to 0 (in other case list of metrics can be limited)
 * Linux kernel version at least 2.6.31
-* /proc/sys/kernel/perf_event_paranoid set to 0
 * [golang 1.5+](https://golang.org/dl/) (needed only for building)
+
+
 
 ### Installation
 
@@ -72,20 +76,20 @@ To learn more about this plugin and Linux perf counters, visit:
 ### Collected Metrics
 This plugin has the ability to gather the following metrics:
 
-Namespace | Data Type | Source | Description
-------------------|--------|-----------|-------------------------------
-/intel/linux/perfevents/cgroup/cycles/[GROUP_NAME] | float64 | hostname | Total cycles. Be wary of what happens during CPU frequency scaling.
-/intel/linux/perfevents/cgroup/instructions/[GROUP_NAME] | float64 | hostname | Retired instructions
-/intel/linux/perfevents/cgroup/cache-references/[GROUP_NAME] | float64 | hostname | Cache accesses. Usually this indicates Last Level Cache accesses but this may vary depending on your CPU. This may include prefetches and coherency messages; again this depends on the design of your CPU.
-/intel/linux/perfevents/cgroup/cache-misses/[GROUP_NAME] | float64 | hostname | Cache misses. Usually this indicates Last Level Cache misses; this is intended to be used in conjunction with the cache-references event to calculate cache miss rates.
-/intel/linux/perfevents/cgroup/branch-instructions/[GROUP_NAME] | float64 | hostname | Retired branch instructions
-/intel/linux/perfevents/cgroup/branch-misses/[GROUP_NAME] | float64 | hostname | Mispredicted branch instructions
-/intel/linux/perfevents/cgroup/stalled-cycles-frontend/[GROUP_NAME] | float64 | hostname | Stalled cycles during issue
-/intel/linux/perfevents/cgroup/stalled-cycles-backend/[GROUP_NAME] | float64 | hostname | Stalled cycles during retirement
-/intel/linux/perfevents/cgroup/ref-cycles/[GROUP_NAME] | float64 | hostname | Total cycles; not affected by CPU frequency scaling
+Namespace | Data Type |  Description
+------------------|--------|-------------------------------
+/intel/linux/perfevents/cgroup/cycles/[GROUP_NAME] | float64  | Total cycles. Be wary of what happens during CPU frequency scaling.
+/intel/linux/perfevents/cgroup/instructions/[GROUP_NAME] | float64  | Retired instructions
+/intel/linux/perfevents/cgroup/cache-references/[GROUP_NAME] | float64  | Cache accesses. Usually this indicates Last Level Cache accesses but this may vary depending on your CPU. This may include prefetches and coherency messages; again this depends on the design of your CPU.
+/intel/linux/perfevents/cgroup/cache-misses/[GROUP_NAME] | float64  | Cache misses. Usually this indicates Last Level Cache misses; this is intended to be used in conjunction with the cache-references event to calculate cache miss rates.
+/intel/linux/perfevents/cgroup/branch-instructions/[GROUP_NAME] | float64  | Retired branch instructions
+/intel/linux/perfevents/cgroup/branch-misses/[GROUP_NAME] | float64  | Mispredicted branch instructions
+/intel/linux/perfevents/cgroup/stalled-cycles-frontend/[GROUP_NAME] | float64  | Stalled cycles during issue
+/intel/linux/perfevents/cgroup/stalled-cycles-backend/[GROUP_NAME] | float64  | Stalled cycles during retirement
+/intel/linux/perfevents/cgroup/ref-cycles/[GROUP_NAME] | float64  | Total cycles; not affected by CPU frequency scaling
 
 ### Examples
-Example running perfevents, passthru processor, and writing data to a file.
+Example running perfevents collector and writing data to a file.
 
 This is done from the snap directory.
 
@@ -95,66 +99,46 @@ $ $SNAP_PATH/bin/snapd -l 1 -t 0
 ```
 
 In another terminal window:
-Load perfevents plugin
+Load perfevents collector plugin
 ```
-$ $SNAP_PATH/bin/snapctl plugin load build/plugin/snap-collector-perfevents
+$ $SNAP_PATH/bin/snapctl plugin load build/rootfs/snap-plugin-collector-perfevents
+
+Plugin loaded
+Name: perfevents
+Version: 8
+Type: collector
+Signed: false
+Loaded Time: Wed, 13 Jul 2016 12:43:19 CEST
 ```
 See available metrics for your system
 ```
 $ $SNAP_PATH/bin/snapctl metric list
 ```
 
-Create a task manifest file (e.g. `perfevents-file.json`):    
+Create a task manifest file (see examples/tasks/perfevents-file.json)[examples/tasks/perfevents-file.json]:    
 ```json
 {
     "version": 1,
     "schedule": {
         "type": "simple",
-        "interval": "1s"
+        "interval": "3s"
     },
     "workflow": {
         "collect": {
             "metrics": {
-                "/intel/linux/perfevents/cgroup/branch-instructions/A" :{},
-                "/intel/linux/perfevents/cgroup/branch-misses/A": {},
-                "/intel/linux/perfevents/cgroup/cache-misses/A": {}
-            },
-            "config": {
-                "/intel/mock": {
-                    "password": "secret",
-                    "user": "root"
-                }
-            },
-            "process": [
-                {
-                    "plugin_name": "passthru",
-                    "process": null,
-                    "publish": [
+                "/intel/linux/perfevents/*" :{}
+            },            
+           "publish": [
                         {
                             "plugin_name": "file",
                             "config": {
                                 "file": "/tmp/published_perfevents"
                             }
                         }
-                    ],
-                    "config": null
-                }
-            ],
-            "publish": null
+                ]
         }
     }
 }
-```
-
-Load passthru plugin for processing:
-```
-$ $SNAP_PATH/bin/snapctl plugin load build/plugin/snap-processor-passthru
-Plugin loaded
-Name: passthru
-Version: 1
-Type: processor
-Signed: false
-Loaded Time: Wed, 02 Dec 2015 11:15:46 EST
 ```
 
 Load file plugin for publishing:
@@ -165,7 +149,7 @@ Name: file
 Version: 3
 Type: publisher
 Signed: false
-Loaded Time: Wed, 02 Dec 2015 11:16:27 EST
+Loaded Time: Wed, 13 Jul 2016 12:44:11 CEST
 ```
 
 Create task:
@@ -178,19 +162,34 @@ Name: Task-02dd7ff4-8106-47e9-8b86-70067cd0a850
 State: Running
 ```
 
-See file output (this is just part of the file):
+See sample output from snapctl task watch <task_id>
+
 ```
-2015-12-02 11:17:25.400155315 -0500 EST|[intel linux perfevents cgroup branch-misses A]|8746|gklab-044-107
-2015-12-02 11:17:25.400176851 -0500 EST|[intel linux perfevents cgroup cache-misses A]|920|gklab-044-107
-2015-12-02 11:17:25.400182433 -0500 EST|[intel linux perfevents cgroup branch-instructions A]|1003127166|gklab-044-107
-2015-12-02 11:17:27.306543691 -0500 EST|[intel linux perfevents cgroup branch-misses A]|8824|gklab-044-107
-2015-12-02 11:17:27.306563423 -0500 EST|[intel linux perfevents cgroup cache-misses A]|987|gklab-044-107
-2015-12-02 11:17:27.30656858 -0500 EST|[intel linux perfevents cgroup branch-instructions A]|984027519|gklab-044-107
-2015-12-02 11:17:29.306252332 -0500 EST|[intel linux perfevents cgroup branch-misses A]|8003|gklab-044-107
-2015-12-02 11:17:29.306274722 -0500 EST|[intel linux perfevents cgroup cache-misses A]|910|gklab-044-107
-2015-12-02 11:17:29.306280418 -0500 EST|[intel linux perfevents cgroup branch-instructions A]|979076923|gklab-044-107
-2015-12-02 11:17:31.306634429 -0500 EST|[intel linux perfevents cgroup branch-misses A]|8968|gklab-044-107
+$ $SNAP_PATH/bin/snapctl task watch 02dd7ff4-8106-47e9-8b86-70067cd0a850
+
+/intel/linux/perfevents/cgroup/branch-instructions/system_slice                                          1.249881e+06            2016-07-13 12:43:32.273501321 +0200 CEST
+/intel/linux/perfevents/cgroup/branch-misses/system_slice                                                62875                   2016-07-13 12:43:32.273557564 +0200 CEST
+/intel/linux/perfevents/cgroup/branch-misses/user_slice                                                                          2016-07-13 12:43:32.273561431 +0200 CEST
+/intel/linux/perfevents/cgroup/cache-misses/system_slice                                                 166413                  2016-07-13 12:43:32.27344248 +0200 CEST
+/intel/linux/perfevents/cgroup/cache-misses/user_slice                                                                           2016-07-13 12:43:32.273446952 +0200 CEST
+/intel/linux/perfevents/cgroup/branch-instructions/system_slice                                          1.460461e+06            2016-07-13 12:43:35.268157381 +0200 CEST
+/intel/linux/perfevents/cgroup/branch-instructions/user_slice                                                                    2016-07-13 12:43:35.268162628 +0200 CEST
+/intel/linux/perfevents/cgroup/branch-misses/system_slice                                                82953                   2016-07-13 12:43:35.268226596 +0200 CEST
+/intel/linux/perfevents/cgroup/branch-misses/user_slice                                                                          2016-07-13 12:43:35.268232068 +0200 CEST
+/intel/linux/perfevents/cgroup/cache-misses/system_slice                                                 224287                  2016-07-13 12:43:35.268059369 +0200 CEST
+/intel/linux/perfevents/cgroup/cache-misses/user_slice                                                                           2016-07-13 12:43:35.268064862 +0200 CEST
+/intel/linux/perfevents/cgroup/stalled-cycles-backend/system_slice                                       <not supported>         2016-07-13 12:43:35.268064862 +0200 CEST
+/intel/linux/perfevents/cgroup/stalled-cycles-backend/user_slice                                         <not supported>         2016-07-13 12:43:35.268064862 +0200 CEST
+/intel/linux/perfevents/cgroup/stalled-cycles-frontend/system_slice                                      <not supported>         2016-07-13 12:44:32.266638857 +0200 CEST
+/intel/linux/perfevents/cgroup/stalled-cycles-frontend/user_slice                                        <not supported>         2016-07-13 12:44:32.266644089 +0200 CEST
 ```
+(Keys `ctrl+c` terminate task watcher)
+
+These data are published to file and stored there (in this example in /tmp/published_perfevents).
+
+Notice, that if perf stat command returns:
+ - **not counted**, the value of metric will be `nil`
+ - **not supported**, the value of metric will be `<not supported>` and it will be omitted in the next cycle of collection
 
 Stop task:
 ```
