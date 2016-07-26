@@ -39,25 +39,32 @@ const (
 	// Name of plugin
 	name = "perfevents"
 	// Version of plugin
-	version = 7
+	version = 8
 	// Type of plugin
 	pluginType = plugin.CollectorPluginType
 	// Namespace definition
-	ns_vendor  = "intel"
-	ns_class   = "linux"
-	ns_type    = "perfevents"
-	ns_subtype = "cgroup"
+	ns_vendor     = "intel"
+	ns_class      = "linux"
+	ns_type       = "perfevents"
+	ns_subtype    = "cgroup"
+	not_supported = "<not supported>"
+	not_counted   = "<not counted>"
 )
 
 type event struct {
-	id    string
 	etype string
-	value uint64
+	id    string
+	value interface{}
 }
 
 type Perfevents struct {
-	cgroup_events []event
+	cgroup_events map[string]event
 	Init          func() error
+
+	// the map of perf events which are unsupported by kernel
+	// <not supported> - platform does not support this processors's performance monitoring unit (PMU) when kernel does not support perf event, but the kernel has perf module enabled
+	// <not counted> - when there is no kernel support for perf event (disabled module)
+	unsupportedEvents map[string]string
 }
 
 var CGROUP_EVENTS = []string{"cycles", "instructions", "cache-references", "cache-misses",
@@ -71,21 +78,30 @@ func Meta() *plugin.PluginMeta {
 // CollectMetrics returns HW metrics from perf events subsystem
 // for Cgroups present on the host.
 func (p *Perfevents) CollectMetrics(mts []plugin.MetricType) ([]plugin.MetricType, error) {
-	if len(mts) == 0 {
-		return nil, nil
-	}
 	events := []string{}
 	cgroups := []string{}
 
 	// Get list of events and cgroups from Namespace
-	// Replace "_" with "/" in cgroup name
 	for _, m := range mts {
-		err := validateNamespace(m.Namespace().Strings())
+		event, cgroup, err := getEventAndCgroupFromNamespace(m.Namespace().Strings())
 		if err != nil {
 			return nil, err
 		}
-		events = append(events, m.Namespace().Strings()[4])
-		cgroups = append(cgroups, strings.Replace(m.Namespace().Strings()[5], "_", "/", -1))
+
+		if _, isNotSupported := p.unsupportedEvents[event]; !isNotSupported {
+			// append if supported (not exist in map of unsupported events)
+			events = append(events, event)
+			cgroups = append(cgroups, cgroup)
+		}
+	}
+
+	if len(cgroups) != len(events) {
+		return nil, fmt.Errorf("Invalid args for perf command, the number of events=%d, cgroups%d (expected to be equal)", len(events), len(cgroups))
+	}
+
+	// in case when all requested metrics have an event which is unsupported
+	if len(events) == 0 {
+		return nil, fmt.Errorf("There is no supported perf events for requested metrics")
 	}
 
 	// Prepare events (-e) and Cgroups (-G) switches for "perf stat"
@@ -94,70 +110,73 @@ func (p *Perfevents) CollectMetrics(mts []plugin.MetricType) ([]plugin.MetricTyp
 
 	// Prepare "perf stat" command
 	cmd := exec.Command("perf", "stat", "--log-fd", "1", `-x;`, "-a", eventsSwitch, cgroupsSwitch, "--", "sleep", "1")
+	output, err := cmd.Output()
 
-	cmdReader, err := cmd.StdoutPipe()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error creating StdoutPipe", err)
+		fmt.Fprintln(os.Stderr, fmt.Sprintf("Execution of perf command returns err=%v, command=%v", err, cmd.Args))
 		return nil, err
 	}
 
 	// Parse "perf stat" output
-	p.cgroup_events = make([]event, len(mts))
-	scanner := bufio.NewScanner(cmdReader)
-	go func() {
-		for i := 0; scanner.Scan(); i++ {
-			line := strings.Split(scanner.Text(), ";")
-			value, err := strconv.ParseUint(line[0], 10, 64)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, "Invalid metric value", err)
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines {
+		// skip empty lines
+		if len(line) == 0 {
+			continue
+		}
+
+		data := strings.Split(line, ";")
+		if len(data) < 3 {
+			fmt.Fprintln(os.Stderr, fmt.Sprintf("Invalid output format %v (expected at least 3 elements separated by `;`)", line))
+			continue
+		}
+		e := event{id: data[3], etype: data[2]}
+		ekey := getEventKey(e.etype, e.id)
+
+		// check kernel support for perf event
+		switch data[0] {
+		case not_supported:
+			fmt.Fprintln(os.Stderr, fmt.Sprintf("There is no support for perf event `%s`", e.etype))
+			// add this event to unsupported_events; it will be omitted in collection next time
+			p.unsupportedEvents[e.etype] = data[0]
+			// set value to "<not supported>"
+			e.value = data[0]
+
+		case not_counted:
+			// only log it, the value of event is `nil`
+			fmt.Fprintln(os.Stderr, fmt.Sprintf("Perf event %s is not counted for %s", e.etype, e.id))
+
+		default:
+			// numeric value is expected
+			if e.value, err = strconv.ParseUint(data[0], 10, 64); err != nil {
+				fmt.Fprintln(os.Stderr, fmt.Sprintf("Invalid metric value for %s:%s, err=%v", e.etype, e.id, err))
 			}
-			etype := line[2]
-			id := line[3]
-			e := event{id: id, etype: etype, value: value}
-			p.cgroup_events[i] = e
 		}
-	}()
-
-	// Run command and wait (up to 2 secs) for completion
-	err = cmd.Start()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error starting perf stat", err)
-		return nil, err
-	}
-
-	st := time.Now()
-	for {
-		if len(p.cgroup_events) == cap(p.cgroup_events) {
-			break
-		}
-		if time.Since(st) > time.Second*2 {
-			return nil, fmt.Errorf("Timed out waiting for metrics from perf stat")
-		}
-	}
-	err = cmd.Wait()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error waiting for perf stat", err)
-		return nil, err
+		p.cgroup_events[ekey] = e
 	}
 
 	// Populate metrics
-	metrics := make([]plugin.MetricType, len(mts))
-	i := 0
+	metrics := []plugin.MetricType{}
+
 	for _, m := range mts {
-		hostname, _ := os.Hostname()
-		tags := m.Tags()
-		if tags == nil {
-			tags = map[string]string{}
+		var val interface{}
+		// skip error (because it's handle in the beginning of CollectMetrics())
+		event, cgroup, _ := getEventAndCgroupFromNamespace(m.Namespace().Strings())
+
+		// retrieve value based on eventKey
+		if event, ok := p.cgroup_events[getEventKey(event, cgroup)]; ok {
+			val = event.value
 		}
-		tags["hostname"] = hostname
-		metric, err := populate_metric(m.Namespace(), p.cgroup_events[i])
-		if err != nil {
-			return nil, err
+
+		metric := plugin.MetricType{
+			Namespace_: m.Namespace(),
+			Data_:      val,
+			Timestamp_: time.Now(),
+			Tags_:      m.Tags(),
 		}
-		metrics[i] = *metric
-		metrics[i].Tags_ = tags
-		i++
+		metrics = append(metrics, metric)
 	}
+
 	return metrics, nil
 }
 
@@ -188,7 +207,7 @@ func (p *Perfevents) GetConfigPolicy() (*cpolicy.ConfigPolicy, error) {
 
 // New initializes Perfevents plugin
 func NewPerfeventsCollector() *Perfevents {
-	return &Perfevents{Init: initialize}
+	return &Perfevents{cgroup_events: make(map[string]event), unsupportedEvents: make(map[string]string), Init: initialize}
 }
 
 func initialize() error {
@@ -205,15 +224,30 @@ func initialize() error {
 		return errors.New("cannot read from perf_event_paranoid")
 	}
 
-	i, err := strconv.ParseInt(scanner.Text(), 10, 64)
+	paranoid, err := strconv.ParseInt(scanner.Text(), 10, 64)
 	if err != nil {
 		return errors.New("invalid value in perf_event_paranoid file")
 	}
 
-	if i >= 1 {
-		return errors.New("insufficient perf event subsystem capabilities")
+	if paranoid >= 1 {
+		fmt.Fprintf(os.Stderr, "Per event paranoia level is %v (see `/proc/sys/kernel.perf_event_paranoid`). There is no permission to collect some stats. List of perf metrics can be limited", paranoid)
 	}
+
 	return nil
+}
+
+func getEventAndCgroupFromNamespace(ns []string) (event string, cgroup string, err error) {
+	if err = validateNamespace(ns); err != nil {
+		return
+	}
+	flatcgroup := strings.Replace(ns[5], "_", ".", -1)
+	cgroup = strings.Replace(flatcgroup, ":", "/", -1)
+	event = ns[4]
+	return
+}
+
+func getEventKey(etype, eid string) string {
+	return fmt.Sprintf("%s:%s", etype, eid)
 }
 
 func set_supported_metrics(source string, cgroups []string, events []string) []plugin.MetricType {
@@ -228,17 +262,9 @@ func set_supported_metrics(source string, cgroups []string, events []string) []p
 func flatten_cg_name(cg []string) []string {
 	flat_cg := []string{}
 	for _, c := range cg {
-		flat_cg = append(flat_cg, strings.Replace(c, "/", "_", -1))
+		flat_cg = append(flat_cg, strings.Replace(c, "/", ":", -1))
 	}
 	return flat_cg
-}
-
-func populate_metric(ns core.Namespace, e event) (*plugin.MetricType, error) {
-	return &plugin.MetricType{
-		Namespace_: ns,
-		Data_:      e.value,
-		Timestamp_: time.Now(),
-	}, nil
 }
 
 func list_cgroups() ([]string, error) {
@@ -248,11 +274,10 @@ func list_cgroups() ([]string, error) {
 		if info.IsDir() {
 			cgroup_name := strings.TrimPrefix(path, base_path)
 			if len(cgroup_name) > 0 {
-				cgroups = append(cgroups, cgroup_name)
+				cgroups = append(cgroups, removeNotAllowChars(cgroup_name))
 			}
 		}
 		return nil
-
 	})
 	if err != nil {
 		return nil, err
@@ -260,6 +285,14 @@ func list_cgroups() ([]string, error) {
 	return cgroups, nil
 }
 
+func removeNotAllowChars(str string) string {
+	notAllowedChars := []string{"(", ")", "[", "]", "{", "}", " ", ".", ",", ";", "?", "!"}
+
+	for _, chr := range notAllowedChars {
+		str = strings.Replace(str, chr, "_", -1)
+	}
+	return str
+}
 func validateNamespace(namespace []string) error {
 	if len(namespace) != 6 {
 		return errors.New(fmt.Sprintf("unknown metricType %s (should containt exactly 6 segments)", namespace))

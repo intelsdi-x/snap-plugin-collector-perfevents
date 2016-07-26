@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "schedule": {
+        "type": "simple",
+        "interval": "3s"
+    },
+    "workflow": {
+        "collect": {
+            "metrics": {
+                "/intel/linux/perfevents/*" :{}
+            },
+	   "publish": [
+                        {
+                            "plugin_name": "file",
+                            "config": {
+                                "file": "/tmp/published_perfevents"
+                            }
+                        }
+                ]
+        }
+    }
+}
