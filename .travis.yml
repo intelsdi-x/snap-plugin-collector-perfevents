@@ -1,23 +1,70 @@
-sudo: false
+# File managed by pluginsync
+sudo: true
+dist: trusty
 language: go
 go:
-- 1.5.4
-- 1.6.2
-before_install:
-- go get github.com/tools/godep
-- if [ ! -d $SNAP_PLUGIN_SOURCE ]; then mkdir -p $HOME/gopath/src/github.com/intelsdi-x; ln -s $TRAVIS_BUILD_DIR $SNAP_PLUGIN_SOURCE; fi # CI for forks not from intelsdi-x
+- 1.6.3
+- 1.7.1
 env:
   global:
-    - SNAP_PLUGIN_SOURCE=/home/travis/gopath/src/github.com/intelsdi-x/snap-plugin-collector-perfevents
+  - ORG_PATH=/home/travis/gopath/src/github.com/intelsdi-x
+  - SNAP_PLUGIN_SOURCE=/home/travis/gopath/src/github.com/${TRAVIS_REPO_SLUG}
   matrix:
-    - TEST=unit
+  - TEST_TYPE=small
+  - TEST_TYPE=build
+matrix:
+  exclude:
+  - go: 1.6.3
+    env: TEST_TYPE=build
+before_install:
+- "[[ -d $SNAP_PLUGIN_SOURCE ]] || mkdir -p $ORG_PATH && ln -s $TRAVIS_BUILD_DIR $SNAP_PLUGIN_SOURCE"
 install:
-- export TMPDIR=$HOME/tmp
-- mkdir -p $TMPDIR
-- cd $SNAP_PLUGIN_SOURCE # change dir into source
+- cd $SNAP_PLUGIN_SOURCE
 - make deps
 script:
-- make check TEST=$TEST 2>&1 # Run test suite
+- make check 2>&1
 notifications:
+  email: false
   slack:
     secure: VkbZLIc2RH8yf3PtIAxUNPdAu3rQQ7yQx0GcK124JhbEnZGaHyK615V0rbG7HcVmYKGPdB0cXqZiLBDKGqGKb2zR1NepOe1nF03jxGSpPq8jIFeEXSJGEYGL34ScDzZZGuG6qwbjFcXiW5lqn6t8igzp7v2+URYBaZo5ktCS2xY=
+before_deploy:
+- "./scripts/pre_deploy.sh"
+deploy:
+- provider: s3
+  access_key_id: AKIAINMB43VSSPFZISAA
+  secret_access_key:
+    secure: BRNVwF+ehnNrGNfjaDlDxYedlgo642nJC0W4uMPKJzDPD9gD7L8Jbbj/BSWf4mDgPdHdhYbptiSJXS5fkccfu3yUjNw+WTv7nf4B6PZpPTeICVtMRkSk/wgLLbmQvA8WssTX2lHuX//q7fhMh6wwxJ84pB2JbqoC4TKEufU1Z2RPkdHj51hrwcVMH8hTx3bxDZrs1r1QhaS4ZaQkwdnQzWjq2TYHFCnmhGu+uL0pRjwFoIWYuipsGvWaA/slyl6Uo3OVBTbGmxoXBCtB7h6KJ4xstfoNsQaKWwvad6ztqAeiAASEXbSs4IXi6xkXkcENTyrIheWo6QITLUqk0RshOS3UbZpCyUf8eCNOkNJ7MSLxEWGTi6IKclfgZIi4Gld/+A7bqIGQfnsQTwtYgbi4NBOJpzdcXxD5C1OKKkeHQIWIfHcih01oh4KJU7azm2tOJDbtfz/EhAsTiKp7+bq6U+e8qJiEihQjfqHjK8Hhqt3mUDuwCa9Rzgx9tnnFtjl0ENYghijF243co+HmohmCMqVDrbkFjJy/Qbfqe9R3c7wwIdfwbA6caIyMc6JGjR4TfI0+nGBArubzHefnvjQaZ8NW+Je7KFZ2RZRswjBlYl0BKd0DdUsFpbO/l4dtMb7I7Bh1nm52rPssIUtejmbw21EHmtSwUQwzs486FX25NHI=
+  bucket: snap.ci.snap-telemetry.io
+  region: us-west-2
+  skip_cleanup: true
+  local-dir: s3
+  upload-dir: plugins
+  acl: public_read
+  on:
+    repo: intelsdi-x/snap-plugin-collector-perfevents
+    branch: master
+    condition: $TEST_TYPE = "build" && $TRAVIS_GO_VERSION = "1.7.1"
+- provider: s3
+  access_key_id: AKIAINMB43VSSPFZISAA
+  secret_access_key:
+    secure: BRNVwF+ehnNrGNfjaDlDxYedlgo642nJC0W4uMPKJzDPD9gD7L8Jbbj/BSWf4mDgPdHdhYbptiSJXS5fkccfu3yUjNw+WTv7nf4B6PZpPTeICVtMRkSk/wgLLbmQvA8WssTX2lHuX//q7fhMh6wwxJ84pB2JbqoC4TKEufU1Z2RPkdHj51hrwcVMH8hTx3bxDZrs1r1QhaS4ZaQkwdnQzWjq2TYHFCnmhGu+uL0pRjwFoIWYuipsGvWaA/slyl6Uo3OVBTbGmxoXBCtB7h6KJ4xstfoNsQaKWwvad6ztqAeiAASEXbSs4IXi6xkXkcENTyrIheWo6QITLUqk0RshOS3UbZpCyUf8eCNOkNJ7MSLxEWGTi6IKclfgZIi4Gld/+A7bqIGQfnsQTwtYgbi4NBOJpzdcXxD5C1OKKkeHQIWIfHcih01oh4KJU7azm2tOJDbtfz/EhAsTiKp7+bq6U+e8qJiEihQjfqHjK8Hhqt3mUDuwCa9Rzgx9tnnFtjl0ENYghijF243co+HmohmCMqVDrbkFjJy/Qbfqe9R3c7wwIdfwbA6caIyMc6JGjR4TfI0+nGBArubzHefnvjQaZ8NW+Je7KFZ2RZRswjBlYl0BKd0DdUsFpbO/l4dtMb7I7Bh1nm52rPssIUtejmbw21EHmtSwUQwzs486FX25NHI=
+  bucket: snap.ci.snap-telemetry.io
+  region: us-west-2
+  skip_cleanup: true
+  local-dir: s3
+  upload-dir: plugins
+  acl: public_read
+  on:
+    repo: intelsdi-x/snap-plugin-collector-perfevents
+    tags: true
+    condition: $TEST_TYPE = "build" && $TRAVIS_GO_VERSION = "1.7.1"
+- provider: releases
+  api_key:
+    secure: D1eRkkyXlifxkWGJsKzkhj4nFvOEJ4Scn21YZKsIWbZw5PZSFUrZcXJFVL05SUfIus/yGuQ37c/1hh6ChWqGe8eMLyT+K25yrICiPxf+6geMDKpuBy/tmN+IPYpmQje9fY3+iDbytOgNkgafAAGMGrcm+/I+R8cYRMI5hGxLy19pzDMQlVQU4Cn1zNIkvRJx8tS9WObNfUbUVlzIRMhjvL1W0bsngfZeDoI3Z5EmmGZCey2ggbBhIwuGEAyzr/ZNrawD8EWQFF1EnVfsHRRiANGv9nZkURPDlfbY1WWmMhVfEMmq3EDmfbVomdWkq3x3at5bRHAf+36azu7n4tA7N/GJiVwZAMcDiE7mKalKF2GB4+3dreOqQ/CW8Yoghu2nDgm9uq86Rhc6qbaYzq3dQJ6pqPy3x9Cv08iXj3gKIF2gge9vJxmk27sTDt6K/o0g72EQwuOaDGqqh6Aw6/3PzOvbN1F7Iq8OxeFuCJrbrOl2a/tfia157rUsiwlcleTrT+zXf3oFRcfBl9wOL1iMIGD18jiK/6ThzsUVIKd6LYCEobvsDP7lQLZ1tx/tL1alK/n+lr/2X1JiX7YQtAggnwWFb3Fr9+J+Gvbf6tlmOd/NmgKnhXPI6ZzQqmqlSq8sahFRV7VX7/Aog7YLIerVCxAD7glVEGoSTHAibpSynh0=
+  file:
+    - release/snap-plugin-collector-perfevents_linux_x86_64
+  skip_cleanup: true
+  on:
+    repo: intelsdi-x/snap-plugin-collector-perfevents
+    tags: true
+    condition: $TEST_TYPE = "build" && $TRAVIS_GO_VERSION = "1.7.1"
