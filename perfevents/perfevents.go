@@ -78,6 +78,10 @@ func Meta() *plugin.PluginMeta {
 // CollectMetrics returns HW metrics from perf events subsystem
 // for Cgroups present on the host.
 func (p *Perfevents) CollectMetrics(mts []plugin.MetricType) ([]plugin.MetricType, error) {
+	if len(mts) == 0 {
+		return nil, nil
+	}
+
 	events := []string{}
 	cgroups := []string{}
 
