@@ -1,0 +1,17 @@
+.travis.yml:
+  sudo: true
+  dist: trusty
+  before_install:
+    - sudo apt-get install -y linux-tools-$(uname -r)
+  env:
+    global:
+      - ORG_PATH=/home/travis/gopath/src/github.com/intelsdi-x
+      - SNAP_PLUGIN_SOURCE=/home/travis/gopath/src/github.com/${TRAVIS_REPO_SLUG}
+    matrix:
+      - TEST_TYPE=small
+  deploy:
+    access_key_id: AKIAINMB43VSSPFZISAA
+    secret_access_key:
+      secure: BRNVwF+ehnNrGNfjaDlDxYedlgo642nJC0W4uMPKJzDPD9gD7L8Jbbj/BSWf4mDgPdHdhYbptiSJXS5fkccfu3yUjNw+WTv7nf4B6PZpPTeICVtMRkSk/wgLLbmQvA8WssTX2lHuX//q7fhMh6wwxJ84pB2JbqoC4TKEufU1Z2RPkdHj51hrwcVMH8hTx3bxDZrs1r1QhaS4ZaQkwdnQzWjq2TYHFCnmhGu+uL0pRjwFoIWYuipsGvWaA/slyl6Uo3OVBTbGmxoXBCtB7h6KJ4xstfoNsQaKWwvad6ztqAeiAASEXbSs4IXi6xkXkcENTyrIheWo6QITLUqk0RshOS3UbZpCyUf8eCNOkNJ7MSLxEWGTi6IKclfgZIi4Gld/+A7bqIGQfnsQTwtYgbi4NBOJpzdcXxD5C1OKKkeHQIWIfHcih01oh4KJU7azm2tOJDbtfz/EhAsTiKp7+bq6U+e8qJiEihQjfqHjK8Hhqt3mUDuwCa9Rzgx9tnnFtjl0ENYghijF243co+HmohmCMqVDrbkFjJy/Qbfqe9R3c7wwIdfwbA6caIyMc6JGjR4TfI0+nGBArubzHefnvjQaZ8NW+Je7KFZ2RZRswjBlYl0BKd0DdUsFpbO/l4dtMb7I7Bh1nm52rPssIUtejmbw21EHmtSwUQwzs486FX25NHI=
+    api_key:
+      secure: D1eRkkyXlifxkWGJsKzkhj4nFvOEJ4Scn21YZKsIWbZw5PZSFUrZcXJFVL05SUfIus/yGuQ37c/1hh6ChWqGe8eMLyT+K25yrICiPxf+6geMDKpuBy/tmN+IPYpmQje9fY3+iDbytOgNkgafAAGMGrcm+/I+R8cYRMI5hGxLy19pzDMQlVQU4Cn1zNIkvRJx8tS9WObNfUbUVlzIRMhjvL1W0bsngfZeDoI3Z5EmmGZCey2ggbBhIwuGEAyzr/ZNrawD8EWQFF1EnVfsHRRiANGv9nZkURPDlfbY1WWmMhVfEMmq3EDmfbVomdWkq3x3at5bRHAf+36azu7n4tA7N/GJiVwZAMcDiE7mKalKF2GB4+3dreOqQ/CW8Yoghu2nDgm9uq86Rhc6qbaYzq3dQJ6pqPy3x9Cv08iXj3gKIF2gge9vJxmk27sTDt6K/o0g72EQwuOaDGqqh6Aw6/3PzOvbN1F7Iq8OxeFuCJrbrOl2a/tfia157rUsiwlcleTrT+zXf3oFRcfBl9wOL1iMIGD18jiK/6ThzsUVIKd6LYCEobvsDP7lQLZ1tx/tL1alK/n+lr/2X1JiX7YQtAggnwWFb3Fr9+J+Gvbf6tlmOd/NmgKnhXPI6ZzQqmqlSq8sahFRV7VX7/Aog7YLIerVCxAD7glVEGoSTHAibpSynh0=
