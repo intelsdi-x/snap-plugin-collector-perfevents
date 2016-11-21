@@ -1,6 +1,6 @@
-# snap collector plugin - Linux perf events
+# Snap collector plugin - Linux perf events
 
-This plugin collects following hardware metrics for Cgroups from "perf" (Performance Counters for Linux):
+This plugin collects following hardware metrics for Cgroups from "perf" (Performance Counters for Linux) for [Snap Telemetry Framework](http://github.com/intelsdi-x/snap):
 *  cycles
 *  instructions
 *  cache-references
@@ -12,8 +12,6 @@ This plugin collects following hardware metrics for Cgroups from "perf" (Perform
 *  ref-cycles
 
 To see which of them are supported on your platform, please execute command `perf stat ls`.
-
-This plugin is used in the [snap framework] (http://github.com/intelsdi-x/snap).
 
 1. [Getting Started](#getting-started)
   * [System Requirements](#system-requirements)
@@ -34,21 +32,19 @@ In order to use this plugin you need "perf" to be installed on a Linux target ho
 
 ### System Requirements
 
-* root privileges
-* "perf" installed on a host
-* /proc/sys/kernel/perf_event_paranoid set to 0 (in other case list of metrics can be limited)
-* Linux kernel version at least 2.6.31
-* [golang 1.5+](https://golang.org/dl/) (needed only for building)
-
-
+- Linux (kernel 2.6.31+)
+- root privileges
+- "perf" installed on a host
+- /proc/sys/kernel/perf_event_paranoid set to 0 (in other case list of metrics can be limited)
 
 ### Installation
 
 #### Download perfevents plugin binary:
-You can get the pre-built binaries for your OS and architecture at snap's [GitHub Releases](https://github.com/intelsdi-x/snap/releases) page.
+You can get the pre-built binaries for your OS and architecture at plugins's [GitHub Releases](https://github.com/intelsdi-x/snap-plugin-collector-perfevents/releases) page. Download the plugin from the latest release and load it into snapd (`/opt/snap/plugins` is the default location for Snap packages).
 
 #### To build the plugin binary:
-Fork https://github.com/intelsdi-x/snap-plugin-collector-perfevents
+Use https://github.com/intelsdi-x/snap-plugin-collector-perfevents or your fork as repo.
+
 Clone repo into `$GOPATH/src/github.com/intelsdi-x/`:
 
 ```
@@ -59,19 +55,19 @@ Build the plugin by running make within the cloned repo:
 ```
 $ make
 ```
-This builds the plugin in `/build/rootfs/`
+This builds the plugin in `./build/`
 
 ### Configuration and Usage
-* Set up the [snap framework](https://github.com/intelsdi-x/snap/blob/master/README.md#getting-started)
-* Ensure `$SNAP_PATH` is exported  
-`export SNAP_PATH=$GOPATH/src/github.com/intelsdi-x/snap/build`
+
+* Set up the [Snap framework](https://github.com/intelsdi-x/snap/blob/master/README.md#getting-started)
+* Load the plugin and create a task, see example in [Examples](https://github.com/intelsdi-x/snap-plugin-collector-perfevents#examples).
  
 ## Documentation
 
 To learn more about this plugin and Linux perf counters, visit:
 
-* [Linux perf events wiki] (https://perf.wiki.kernel.org/index.php/Main_Page)
-* [snap perfevents unit test](https://github.com/intelsdi-x/snap-plugin-collector-perfevents/blob/master/perfevents/perfevents_test.go)
+* [Linux perf events wiki](https://perf.wiki.kernel.org/index.php/Main_Page)
+* [Snap perfevents unit test](https://github.com/intelsdi-x/snap-plugin-collector-perfevents/blob/master/perfevents/perfevents_test.go)
 
 ### Collected Metrics
 This plugin has the ability to gather the following metrics:
@@ -91,70 +87,44 @@ Namespace | Data Type |  Description
 ### Examples
 Example running perfevents collector and writing data to a file.
 
-This is done from the snap directory.
+Ensure [snap daemon is running](https://github.com/intelsdi-x/snap#running-snap):
+* initd: `sudo service snap-telemetry start`
+* systemd: `sudo systemctl start snap-telemetry`
+* command line: `sudo snapd -l 1 -t 0 &`
 
-In one terminal window, open the snap daemon (in this case with logging set to 1 and trust disabled):
+Download and load snap plugins:
 ```
-$ $SNAP_PATH/bin/snapd -l 1 -t 0
+$ wget http://snap.ci.snap-telemetry.io/plugins/snap-plugin-collector-perfevents/latest/linux/x86_64/snap-plugin-collector-perfevents
+$ wget http://snap.ci.snap-telemetry.io/plugins/snap-plugin-publisher-file/latest/linux/x86_64/snap-plugin-publisher-file
+$ snapctl plugin load snap-plugin-collector-perfevents
+$ snapctl plugin load snap-plugin-publisher-file
 ```
 
-In another terminal window:
-Load perfevents collector plugin
-```
-$ $SNAP_PATH/bin/snapctl plugin load build/rootfs/snap-plugin-collector-perfevents
-
-Plugin loaded
-Name: perfevents
-Version: 8
-Type: collector
-Signed: false
-Loaded Time: Wed, 13 Jul 2016 12:43:19 CEST
-```
 See available metrics for your system
 ```
-$ $SNAP_PATH/bin/snapctl metric list
+$ snapctl metric list
+NAMESPACE                                                               VERSIONS
+/intel/linux/perfevents/cgroup/branch-instructions/system_slice         8
+/intel/linux/perfevents/cgroup/branch-misses/system_slice               8
+/intel/linux/perfevents/cgroup/branch-misses/user_slice                 8
+/intel/linux/perfevents/cgroup/cache-misses/system_slice                8
+/intel/linux/perfevents/cgroup/cache-misses/user_slice                  8
+/intel/linux/perfevents/cgroup/branch-instructions/system_slice         8
+/intel/linux/perfevents/cgroup/branch-instructions/user_slice           8
+/intel/linux/perfevents/cgroup/branch-misses/system_slice               8
+/intel/linux/perfevents/cgroup/branch-misses/user_slice                 8
+/intel/linux/perfevents/cgroup/cache-misses/system_slice                8
+/intel/linux/perfevents/cgroup/cache-misses/user_slice                  8
+/intel/linux/perfevents/cgroup/stalled-cycles-backend/system_slice      8
+/intel/linux/perfevents/cgroup/stalled-cycles-backend/user_slice        8
+/intel/linux/perfevents/cgroup/stalled-cycles-frontend/system_slice     8
+/intel/linux/perfevents/cgroup/stalled-cycles-frontend/user_slice       8
 ```
 
-Create a task manifest file (see examples/tasks/perfevents-file.json)[examples/tasks/perfevents-file.json]:    
-```json
-{
-    "version": 1,
-    "schedule": {
-        "type": "simple",
-        "interval": "3s"
-    },
-    "workflow": {
-        "collect": {
-            "metrics": {
-                "/intel/linux/perfevents/*" :{}
-            },            
-           "publish": [
-                        {
-                            "plugin_name": "file",
-                            "config": {
-                                "file": "/tmp/published_perfevents"
-                            }
-                        }
-                ]
-        }
-    }
-}
+Download an [example task file](https://github.com/intelsdi-x/snap-plugin-collector-perfevents/blob/master/examples/tasks/perfevents-file.json) and load it:
 ```
-
-Load file plugin for publishing:
-```
-$ $SNAP_PATH/bin/snapctl plugin load build/plugin/snap-publisher-file
-Plugin loaded
-Name: file
-Version: 3
-Type: publisher
-Signed: false
-Loaded Time: Wed, 13 Jul 2016 12:44:11 CEST
-```
-
-Create task:
-```
-$ $SNAP_PATH/bin/snapctl task create -t examples/tasks/perfevents-file.json
+$ curl -sfLO https://github.com/intelsdi-x/snap-plugin-collector-perfevents/blob/master/examples/tasks/perfevents-file.json
+$ snapctl task create -t perfevents-file.json
 Using task manifest to create task
 Task created
 ID: 02dd7ff4-8106-47e9-8b86-70067cd0a850
@@ -162,10 +132,9 @@ Name: Task-02dd7ff4-8106-47e9-8b86-70067cd0a850
 State: Running
 ```
 
-See sample output from snapctl task watch <task_id>
-
+See realtime output from `snapctl task watch <task_id>` (CTRL+C to exit)
 ```
-$ $SNAP_PATH/bin/snapctl task watch 02dd7ff4-8106-47e9-8b86-70067cd0a850
+$ snapctl task watch 02dd7ff4-8106-47e9-8b86-70067cd0a850
 
 /intel/linux/perfevents/cgroup/branch-instructions/system_slice                                          1.249881e+06            2016-07-13 12:43:32.273501321 +0200 CEST
 /intel/linux/perfevents/cgroup/branch-misses/system_slice                                                62875                   2016-07-13 12:43:32.273557564 +0200 CEST
@@ -183,9 +152,8 @@ $ $SNAP_PATH/bin/snapctl task watch 02dd7ff4-8106-47e9-8b86-70067cd0a850
 /intel/linux/perfevents/cgroup/stalled-cycles-frontend/system_slice                                      <not supported>         2016-07-13 12:44:32.266638857 +0200 CEST
 /intel/linux/perfevents/cgroup/stalled-cycles-frontend/user_slice                                        <not supported>         2016-07-13 12:44:32.266644089 +0200 CEST
 ```
-(Keys `ctrl+c` terminate task watcher)
 
-These data are published to file and stored there (in this example in /tmp/published_perfevents).
+This data is published to a file `/tmp/published_perfevents` per task specification.
 
 Notice, that if perf stat command returns:
  - **not counted**, the value of metric will be `nil`
@@ -193,7 +161,7 @@ Notice, that if perf stat command returns:
 
 Stop task:
 ```
-$ $SNAP_PATH/bin/snapctl task stop 02dd7ff4-8106-47e9-8b86-70067cd0a850
+$ snapctl task stop 02dd7ff4-8106-47e9-8b86-70067cd0a850
 Task stopped:
 ID: 02dd7ff4-8106-47e9-8b86-70067cd0a850
 ```
@@ -202,7 +170,7 @@ ID: 02dd7ff4-8106-47e9-8b86-70067cd0a850
 There isn't a current roadmap for this plugin, but it is in active development. As we launch this plugin, we do not have any outstanding requirements for the next release. If you have a feature request, please add it as an [issue](https://github.com/intelsdi-x/snap-plugin-collector-perfevents/issues/new) and/or submit a [pull request](https://github.com/intelsdi-x/snap-plugin-collector-perfevents/pulls).
 
 ## Community Support
-This repository is one of **many** plugins in **snap**, a powerful telemetry framework. See the full project at http://github.com/intelsdi-x/snap To reach out to other users, head to the [main framework](https://github.com/intelsdi-x/snap#community-support)
+This repository is one of **many** plugins in **Snap**, a powerful telemetry framework. See the full project at http://github.com/intelsdi-x/snap To reach out to other users, head to the [main framework](https://github.com/intelsdi-x/snap#community-support)
 
 ## Contributing
 We love contributions!
@@ -210,9 +178,9 @@ We love contributions!
 There's more than one way to give back, from examples to blogs to code updates. See our recommended process in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
-[snap](http://github.com:intelsdi-x/snap), along with this plugin, is an Open Source software released under the Apache 2.0 [License](LICENSE).
+[Snap](http://github.com:intelsdi-x/snap), along with this plugin, is an Open Source software released under the Apache 2.0 [License](LICENSE).
 
 ## Acknowledgements
 * Author: [@andrzej-k](https://github.com/andrzej-k)
 
-And **thank you!** Your contribution, through code and participation, is incredibly important to us.
+**Thank you!** Your contribution, through code and participation, is incredibly important to us.
