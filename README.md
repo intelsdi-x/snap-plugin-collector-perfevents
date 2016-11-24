@@ -40,7 +40,7 @@ In order to use this plugin you need "perf" to be installed on a Linux target ho
 ### Installation
 
 #### Download perfevents plugin binary:
-You can get the pre-built binaries for your OS and architecture at plugins's [GitHub Releases](https://github.com/intelsdi-x/snap-plugin-collector-perfevents/releases) page. Download the plugin from the latest release and load it into snapd (`/opt/snap/plugins` is the default location for Snap packages).
+You can get the pre-built binaries for your OS and architecture at plugins's [GitHub Releases](https://github.com/intelsdi-x/snap-plugin-collector-perfevents/releases) page. Download the plugin from the latest release and load it into snapteld (`/opt/snap/plugins` is the default location for Snap packages).
 
 #### To build the plugin binary:
 Use https://github.com/intelsdi-x/snap-plugin-collector-perfevents or your fork as repo.
@@ -90,19 +90,19 @@ Example running perfevents collector and writing data to a file.
 Ensure [snap daemon is running](https://github.com/intelsdi-x/snap#running-snap):
 * initd: `sudo service snap-telemetry start`
 * systemd: `sudo systemctl start snap-telemetry`
-* command line: `sudo snapd -l 1 -t 0 &`
+* command line: `sudo snapteld -l 1 -t 0 &`
 
 Download and load snap plugins:
 ```
 $ wget http://snap.ci.snap-telemetry.io/plugins/snap-plugin-collector-perfevents/latest/linux/x86_64/snap-plugin-collector-perfevents
 $ wget http://snap.ci.snap-telemetry.io/plugins/snap-plugin-publisher-file/latest/linux/x86_64/snap-plugin-publisher-file
-$ snapctl plugin load snap-plugin-collector-perfevents
-$ snapctl plugin load snap-plugin-publisher-file
+$ snaptel plugin load snap-plugin-collector-perfevents
+$ snaptel plugin load snap-plugin-publisher-file
 ```
 
 See available metrics for your system
 ```
-$ snapctl metric list
+$ snaptel metric list
 NAMESPACE                                                               VERSIONS
 /intel/linux/perfevents/cgroup/branch-instructions/system_slice         8
 /intel/linux/perfevents/cgroup/branch-misses/system_slice               8
@@ -124,7 +124,7 @@ NAMESPACE                                                               VERSIONS
 Download an [example task file](https://github.com/intelsdi-x/snap-plugin-collector-perfevents/blob/master/examples/tasks/perfevents-file.json) and load it:
 ```
 $ curl -sfLO https://github.com/intelsdi-x/snap-plugin-collector-perfevents/blob/master/examples/tasks/perfevents-file.json
-$ snapctl task create -t perfevents-file.json
+$ snaptel task create -t perfevents-file.json
 Using task manifest to create task
 Task created
 ID: 02dd7ff4-8106-47e9-8b86-70067cd0a850
@@ -132,9 +132,9 @@ Name: Task-02dd7ff4-8106-47e9-8b86-70067cd0a850
 State: Running
 ```
 
-See realtime output from `snapctl task watch <task_id>` (CTRL+C to exit)
+See realtime output from `snaptel task watch <task_id>` (CTRL+C to exit)
 ```
-$ snapctl task watch 02dd7ff4-8106-47e9-8b86-70067cd0a850
+$ snaptel task watch 02dd7ff4-8106-47e9-8b86-70067cd0a850
 
 /intel/linux/perfevents/cgroup/branch-instructions/system_slice                                          1.249881e+06            2016-07-13 12:43:32.273501321 +0200 CEST
 /intel/linux/perfevents/cgroup/branch-misses/system_slice                                                62875                   2016-07-13 12:43:32.273557564 +0200 CEST
@@ -161,7 +161,7 @@ Notice, that if perf stat command returns:
 
 Stop task:
 ```
-$ snapctl task stop 02dd7ff4-8106-47e9-8b86-70067cd0a850
+$ snaptel task stop 02dd7ff4-8106-47e9-8b86-70067cd0a850
 Task stopped:
 ID: 02dd7ff4-8106-47e9-8b86-70067cd0a850
 ```
