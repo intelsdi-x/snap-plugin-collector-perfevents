@@ -197,10 +197,8 @@ func (p *Perfevents) GetMetricTypes(_ plugin.ConfigType) ([]plugin.MetricType, e
 	if len(cgroups) == 0 {
 		return nil, nil
 	}
-	mts := []plugin.MetricType{}
-	mts = append(mts, set_supported_metrics(ns_subtype, cgroups, CGROUP_EVENTS)...)
 
-	return mts, nil
+	return get_supported_metrics(ns_subtype, cgroups, CGROUP_EVENTS), nil
 }
 
 // GetConfigPolicy returns a ConfigPolicy
@@ -254,8 +252,8 @@ func getEventKey(etype, eid string) string {
 	return fmt.Sprintf("%s:%s", etype, eid)
 }
 
-func set_supported_metrics(source string, cgroups []string, events []string) []plugin.MetricType {
-	mts := make([]plugin.MetricType, len(events)*len(cgroups))
+func get_supported_metrics(source string, cgroups []string, events []string) []plugin.MetricType {
+	mts := []plugin.MetricType{}
 	for _, e := range events {
 		for _, c := range flatten_cg_name(cgroups) {
 			mts = append(mts, plugin.MetricType{Namespace_: core.NewNamespace(ns_vendor, ns_class, ns_type, source, e, c)})
