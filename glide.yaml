@@ -1,0 +1,13 @@
+package: github.com/intelsdi-x/snap-plugin-collector-perfevents
+import:
+- package: github.com/intelsdi-x/snap
+  version: ^1.0.0
+  subpackages:
+  - control/plugin
+  - control/plugin/cpolicy
+  - core
+testImport:
+- package: github.com/smartystreets/goconvey
+  version: ^1.6.2
+  subpackages:
+  - convey
