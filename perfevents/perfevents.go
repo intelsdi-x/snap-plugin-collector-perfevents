@@ -39,7 +39,7 @@ const (
 	// Name of plugin
 	name = "perfevents"
 	// Version of plugin
-	version = 8
+	version = 9
 	// Type of plugin
 	pluginType = plugin.CollectorPluginType
 	// Namespace definition
@@ -276,7 +276,7 @@ func list_cgroups() ([]string, error) {
 		if info.IsDir() {
 			cgroup_name := strings.TrimPrefix(path, base_path)
 			if len(cgroup_name) > 0 {
-				cgroups = append(cgroups, removeNotAllowChars(cgroup_name))
+				cgroups = append(cgroups, cgroup_name)
 			}
 		}
 		return nil
@@ -287,14 +287,6 @@ func list_cgroups() ([]string, error) {
 	return cgroups, nil
 }
 
-func removeNotAllowChars(str string) string {
-	notAllowedChars := []string{"(", ")", "[", "]", "{", "}", " ", ".", ",", ";", "?", "!"}
-
-	for _, chr := range notAllowedChars {
-		str = strings.Replace(str, chr, "_", -1)
-	}
-	return str
-}
 func validateNamespace(namespace []string) error {
 	if len(namespace) != 6 {
 		return errors.New(fmt.Sprintf("unknown metricType %s (should containt exactly 6 segments)", namespace))
