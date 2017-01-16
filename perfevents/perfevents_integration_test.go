@@ -41,14 +41,25 @@ func TestPerfEventsCollector(t *testing.T) {
 		Convey("set_supported_metrics", func() {
 			cg := []string{"cgroup1", "cgroup2", "cgroup3"}
 			events := []string{"event1", "event2", "event3"}
-			a := set_supported_metrics(ns_subtype, cg, events)
+			a := get_supported_metrics(ns_subtype, cg, events)
+			So(len(a), ShouldEqual, 9)
 			So(a[len(a)-1].Namespace().Strings(), ShouldResemble, []string{ns_vendor, ns_class, ns_type, ns_subtype, "event3", "cgroup3"})
+		})
+		Convey("set_supported_metrics with special characters", func() {
+			cg := []string{"machine_slice:machine-quemu\x2d1\x2dinstance\x2d001"}
+			events := []string{"event1"}
+			a := get_supported_metrics(ns_subtype, cg, events)
+			So(a, ShouldNotBeNil)
+			So(len(a), ShouldEqual, 1)
+			So(a[0].Namespace().Strings(), ShouldResemble, []string{ns_vendor, ns_class, ns_type, ns_subtype, "event1", "machine_slice:machine-quemu\x2d1\x2dinstance\x2d001"})
 		})
 		Convey("flatten cgroup name", func() {
 			cg := []string{"cg_root/cg_sub1/cg_sub2"}
-			events := []string{"event"}
-			a := set_supported_metrics(ns_subtype, cg, events)
-			So(a[len(a)-1].Namespace().Strings(), ShouldContain, "cg_root_cg_sub1_cg_sub2")
+			events := []string{"event1"}
+			a := get_supported_metrics(ns_subtype, cg, events)
+			So(a, ShouldNotBeNil)
+			So(len(a), ShouldEqual, 1)
+			So(a[0].Namespace().Strings(), ShouldResemble, []string{ns_vendor, ns_class, ns_type, ns_subtype, "event1", "cg_root:cg_sub1:cg_sub2"})
 		})
 	})
 	Convey("CollectMetrics error cases", t, func() {
