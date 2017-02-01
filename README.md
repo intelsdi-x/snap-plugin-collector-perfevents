@@ -166,6 +166,37 @@ Task stopped:
 ID: 02dd7ff4-8106-47e9-8b86-70067cd0a850
 ```
 
+### Using inside docker container
+Plugin can collect perf events inside the docker container. To do that, it is needed to run container in privileged mode and mount host's cgroupfs.
+
+#### Example docker run command for CentOS:
+```bash
+docker run -ti --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro centos:latest bash
+```
+**--privileged** is needed to allow collecting system-wide stats  
+**-v /sys/fs/cgroup:/sys/fs/cgroup:ro** is needed for perf to be able to access host's cgroup hierarchy
+
+Procfs is shared between host and docker container, so you can configure /proc/sys/kernel/perf_event_paranoid once on host side (or from inside the privileged container, result will be the same).
+
+#### Running on Kubernetes
+To obtain the same result in Kubernetes, you need to configure your pods the same way:
+- For running pod in privileged mode: https://kubernetes.io/docs/user-guide/security-context/
+- For mounting cgroupfs volume: https://kubernetes.io/docs/user-guide/volumes/
+
+#### Detecting which cgroup corresponds to current container
+To obtain cgroup of container from inside of that container, you need to check /proc/self/cgroup file.
+
+The file contains current container mountpoints for each subsystem and to retrieve current container's perf_event subsystem cgroup mountpoint, you can run such command:
+
+```bash
+cat /proc/self/cgroup | grep -oP "perf_event:/\K.*"
+```
+
+Example result:
+```
+docker/ae05db810861f060d1732f4ae508973782ac68ff60dff644c9ff4953eb437627
+```
+
 ### Roadmap
 There isn't a current roadmap for this plugin, but it is in active development. As we launch this plugin, we do not have any outstanding requirements for the next release. If you have a feature request, please add it as an [issue](https://github.com/intelsdi-x/snap-plugin-collector-perfevents/issues/new) and/or submit a [pull request](https://github.com/intelsdi-x/snap-plugin-collector-perfevents/pulls).
 
