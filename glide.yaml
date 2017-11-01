@@ -1,7 +1,7 @@
 package: github.com/intelsdi-x/snap-plugin-collector-perfevents
 import:
 - package: github.com/intelsdi-x/snap
-  version: ^1.0.0
+  version: ^2.0.0
   subpackages:
   - control/plugin
   - control/plugin/cpolicy
