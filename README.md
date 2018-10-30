@@ -123,7 +123,7 @@ NAMESPACE                                                               VERSIONS
 
 Download an [example task file](https://github.com/intelsdi-x/snap-plugin-collector-perfevents/blob/master/examples/tasks/perfevents-file.json) and load it:
 ```
-$ curl -sfLO https://github.com/intelsdi-x/snap-plugin-collector-perfevents/blob/master/examples/tasks/perfevents-file.json
+$ curl -sfLO https://raw.githubusercontent.com/intelsdi-x/snap-plugin-collector-perfevents/master/examples/tasks/perfevents-file.json
 $ snaptel task create -t perfevents-file.json
 Using task manifest to create task
 Task created
