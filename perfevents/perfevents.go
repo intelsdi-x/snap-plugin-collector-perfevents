@@ -2,7 +2,7 @@
 http://www.apache.org/licenses/LICENSE-2.0.txt
 
 
-Copyright 2015 Intel Corporation
+Copyright 2018 Intel Corporation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,25 +30,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/intelsdi-x/snap/control/plugin"
-	"github.com/intelsdi-x/snap/control/plugin/cpolicy"
-	"github.com/intelsdi-x/snap/core"
+	"github.com/intelsdi-x/snap-plugin-lib-go/v1/plugin"
 )
 
 const (
-	// Name of plugin
-	name = "perfevents"
-	// Version of plugin
-	version = 9
-	// Type of plugin
-	pluginType = plugin.CollectorPluginType
-	// Namespace definition
-	ns_vendor     = "intel"
-	ns_class      = "linux"
-	ns_type       = "perfevents"
-	ns_subtype    = "cgroup"
-	not_supported = "<not supported>"
-	not_counted   = "<not counted>"
+	Name    = "perfevents"
+	Version = 10
+
+	NsVendor     = "intel"
+	NsClass      = "linux"
+	NsType       = "perfevents"
+	NsSubtype    = "cgroup"
+	NotSupported = "<not supported>"
+	NotCounted   = "<not counted>"
 )
 
 type event struct {
@@ -71,13 +65,9 @@ var CGROUP_EVENTS = []string{"cycles", "instructions", "cache-references", "cach
 	"branch-instructions", "branch-misses", "stalled-cycles-frontend",
 	"stalled-cycles-backend", "ref-cycles"}
 
-func Meta() *plugin.PluginMeta {
-	return plugin.NewPluginMeta(name, version, pluginType, []string{plugin.SnapGOBContentType}, []string{plugin.SnapGOBContentType})
-}
-
 // CollectMetrics returns HW metrics from perf events subsystem
 // for Cgroups present on the host.
-func (p *Perfevents) CollectMetrics(mts []plugin.MetricType) ([]plugin.MetricType, error) {
+func (p Perfevents) CollectMetrics(mts []plugin.Metric) ([]plugin.Metric, error) {
 	if len(mts) == 0 {
 		return nil, nil
 	}
@@ -87,7 +77,7 @@ func (p *Perfevents) CollectMetrics(mts []plugin.MetricType) ([]plugin.MetricTyp
 
 	// Get list of events and cgroups from Namespace
 	for _, m := range mts {
-		event, cgroup, err := getEventAndCgroupFromNamespace(m.Namespace().Strings())
+		event, cgroup, err := getEventAndCgroupFromNamespace(m.Namespace.Strings())
 		if err != nil {
 			return nil, err
 		}
@@ -139,14 +129,14 @@ func (p *Perfevents) CollectMetrics(mts []plugin.MetricType) ([]plugin.MetricTyp
 
 		// check kernel support for perf event
 		switch data[0] {
-		case not_supported:
+		case NotSupported:
 			fmt.Fprintln(os.Stderr, fmt.Sprintf("There is no support for perf event `%s`", e.etype))
 			// add this event to unsupported_events; it will be omitted in collection next time
 			p.unsupportedEvents[e.etype] = data[0]
 			// set value to "<not supported>"
 			e.value = data[0]
 
-		case not_counted:
+		case NotCounted:
 			// only log it, the value of event is `nil`
 			fmt.Fprintln(os.Stderr, fmt.Sprintf("Perf event %s is not counted for %s", e.etype, e.id))
 
@@ -160,23 +150,23 @@ func (p *Perfevents) CollectMetrics(mts []plugin.MetricType) ([]plugin.MetricTyp
 	}
 
 	// Populate metrics
-	metrics := []plugin.MetricType{}
+	metrics := []plugin.Metric{}
 
 	for _, m := range mts {
 		var val interface{}
 		// skip error (because it's handle in the beginning of CollectMetrics())
-		event, cgroup, _ := getEventAndCgroupFromNamespace(m.Namespace().Strings())
+		event, cgroup, _ := getEventAndCgroupFromNamespace(m.Namespace.Strings())
 
 		// retrieve value based on eventKey
 		if event, ok := p.cgroup_events[getEventKey(event, cgroup)]; ok {
 			val = event.value
 		}
 
-		metric := plugin.MetricType{
-			Namespace_: m.Namespace(),
-			Data_:      val,
-			Timestamp_: time.Now(),
-			Tags_:      m.Tags(),
+		metric := plugin.Metric{
+			Namespace: m.Namespace,
+			Data:      val,
+			Timestamp: time.Now(),
+			Tags:      m.Tags,
 		}
 		metrics = append(metrics, metric)
 	}
@@ -185,7 +175,7 @@ func (p *Perfevents) CollectMetrics(mts []plugin.MetricType) ([]plugin.MetricTyp
 }
 
 // GetMetricTypes returns the metric types exposed by perf events subsystem
-func (p *Perfevents) GetMetricTypes(_ plugin.ConfigType) ([]plugin.MetricType, error) {
+func (p Perfevents) GetMetricTypes(_ plugin.Config) ([]plugin.Metric, error) {
 	err := p.Init()
 	if err != nil {
 		return nil, err
@@ -198,18 +188,18 @@ func (p *Perfevents) GetMetricTypes(_ plugin.ConfigType) ([]plugin.MetricType, e
 		return nil, nil
 	}
 
-	return get_supported_metrics(ns_subtype, cgroups, CGROUP_EVENTS), nil
+	return get_supported_metrics(NsSubtype, cgroups, CGROUP_EVENTS), nil
 }
 
 // GetConfigPolicy returns a ConfigPolicy
-func (p *Perfevents) GetConfigPolicy() (*cpolicy.ConfigPolicy, error) {
-	c := cpolicy.New()
-	return c, nil
+func (p Perfevents) GetConfigPolicy() (plugin.ConfigPolicy, error) {
+	c := plugin.NewConfigPolicy()
+	return *c, nil
 }
 
 // New initializes Perfevents plugin
-func NewPerfeventsCollector() *Perfevents {
-	return &Perfevents{cgroup_events: make(map[string]event), unsupportedEvents: make(map[string]string), Init: initialize}
+func NewPerfeventsCollector() Perfevents {
+	return Perfevents{cgroup_events: make(map[string]event), unsupportedEvents: make(map[string]string), Init: initialize}
 }
 
 func initialize() error {
@@ -252,11 +242,11 @@ func getEventKey(etype, eid string) string {
 	return fmt.Sprintf("%s:%s", etype, eid)
 }
 
-func get_supported_metrics(source string, cgroups []string, events []string) []plugin.MetricType {
-	mts := []plugin.MetricType{}
+func get_supported_metrics(source string, cgroups []string, events []string) []plugin.Metric {
+	mts := []plugin.Metric{}
 	for _, e := range events {
 		for _, c := range flatten_cg_name(cgroups) {
-			mts = append(mts, plugin.MetricType{Namespace_: core.NewNamespace(ns_vendor, ns_class, ns_type, source, e, c)})
+			mts = append(mts, plugin.Metric{Namespace: plugin.NewNamespace(NsVendor, NsClass, NsType, source, e, c)})
 		}
 	}
 	return mts
@@ -291,18 +281,18 @@ func validateNamespace(namespace []string) error {
 	if len(namespace) != 6 {
 		return errors.New(fmt.Sprintf("unknown metricType %s (should containt exactly 6 segments)", namespace))
 	}
-	if namespace[0] != ns_vendor {
-		return errors.New(fmt.Sprintf("unknown metricType %s (expected 1st segment %s)", namespace, ns_vendor))
+	if namespace[0] != NsVendor {
+		return errors.New(fmt.Sprintf("unknown metricType %s (expected 1st segment %s)", namespace, NsVendor))
 	}
 
-	if namespace[1] != ns_class {
-		return errors.New(fmt.Sprintf("unknown metricType %s (expected 2nd segment %s)", namespace, ns_class))
+	if namespace[1] != NsClass {
+		return errors.New(fmt.Sprintf("unknown metricType %s (expected 2nd segment %s)", namespace, NsClass))
 	}
-	if namespace[2] != ns_type {
-		return errors.New(fmt.Sprintf("unknown metricType %s (expected 3rd segment %s)", namespace, ns_type))
+	if namespace[2] != NsType {
+		return errors.New(fmt.Sprintf("unknown metricType %s (expected 3rd segment %s)", namespace, NsType))
 	}
-	if namespace[3] != ns_subtype {
-		return errors.New(fmt.Sprintf("unknown metricType %s (expected 4th segment %s)", namespace, ns_subtype))
+	if namespace[3] != NsSubtype {
+		return errors.New(fmt.Sprintf("unknown metricType %s (expected 4th segment %s)", namespace, NsSubtype))
 	}
 	if !namespaceContains(namespace[4], CGROUP_EVENTS) {
 		return errors.New(fmt.Sprintf("unknown metricType %s (expected 5th segment %v)", namespace, CGROUP_EVENTS))
