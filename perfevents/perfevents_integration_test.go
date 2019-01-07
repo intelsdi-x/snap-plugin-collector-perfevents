@@ -23,9 +23,9 @@ package perfevents
 
 import (
 	"errors"
-	"testing"
 	"github.com/intelsdi-x/snap-plugin-lib-go/v1/plugin"
-	.  "github.com/smartystreets/goconvey/convey"
+	. "github.com/smartystreets/goconvey/convey"
+	"testing"
 )
 
 func TestPerfEventsCollector(t *testing.T) {
