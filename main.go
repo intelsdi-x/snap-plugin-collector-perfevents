@@ -20,17 +20,11 @@ limitations under the License.
 package main
 
 import (
-	"os"
-
 	"github.com/intelsdi-x/snap-plugin-collector-perfevents/perfevents"
-	"github.com/intelsdi-x/snap/control/plugin"
+	"github.com/intelsdi-x/snap-plugin-lib-go/v1/plugin"
 )
 
 // plugin bootstrap
 func main() {
-	plugin.Start(
-		perfevents.Meta(),
-		perfevents.NewPerfeventsCollector(),
-		os.Args[1],
-	)
+	plugin.StartCollector(perfevents.NewPerfeventsCollector(), perfevents.Name, perfevents.Version)
 }

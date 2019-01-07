@@ -1,11 +1,11 @@
 package: github.com/intelsdi-x/snap-plugin-collector-perfevents
 import:
-- package: github.com/intelsdi-x/snap
-  version: ^2.0.0
+- package: github.com/sirupsen/logrus
+- package: github.com/intelsdi-x/snap-plugin-lib-go
   subpackages:
-  - control/plugin
-  - control/plugin/cpolicy
-  - core
+  - v1/plugin
+- package: google.golang.org/grpc
+  version: ~v1.5.2
 testImport:
 - package: github.com/smartystreets/goconvey
   version: ^1.6.2

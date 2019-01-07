@@ -1,34 +1,66 @@
-hash: b15bb0d56d829197ca867f87b1949b1eb96bb171bfb0909d007c9cf20e407847
-updated: 2017-11-01T10:31:52.728684694+08:00
+hash: 33bb2ac159bd225e2df3740447ede4f707bc22dd7d43ba290d46cd7186d55bd9
+updated: 2018-10-30T12:14:38.409088243+01:00
 imports:
-- name: github.com/asaskevich/govalidator
-  version: 9699ab6b38bee2e02cd3fe8b99ecf67665395c96
-- name: github.com/intelsdi-x/snap
-  version: 79e1dd457d77c985491c2f4746cbc425fb3dc2dd
+- name: github.com/golang/protobuf
+  version: b4deda0973fb4c70b50d226b1af49f3da59f5265
   subpackages:
-  - control/plugin
-  - control/plugin/cpolicy
-  - control/plugin/encoding
-  - control/plugin/encrypter
-  - core
-  - core/cdata
-  - core/ctypes
-  - core/serror
-  - pkg/ctree
-  - pkg/fileutils
-  - pkg/schedule
-  - pkg/stringutils
-  - scheduler/wmap
-- name: github.com/robfig/cron
-  version: 32d9c273155a0506d27cf73dd1246e86a470997e
+  - proto
+  - ptypes/any
+- name: github.com/intelsdi-x/snap-plugin-lib-go
+  version: e15172330a819bd90c2dc6cc23f8c894eb6e9986
+  subpackages:
+  - v1/plugin
+  - v1/plugin/rpc
+- name: github.com/julienschmidt/httprouter
+  version: 348b672cd90d8190f8240323e372ecd1e66b59dc
+- name: github.com/konsorten/go-windows-terminal-sequences
+  version: 5c8c8bd35d3832f5d134ae1e1e375b69a4d25242
 - name: github.com/sirupsen/logrus
-  version: be52937128b38f1d99787bb476c789e2af1147f1
-- name: golang.org/x/sys
-  version: c8bc69bc2db9c57ccf979550bc69655df5039a8a
+  version: ad15b42461921f1fb3529b058c6786c6a45d5162
+- name: github.com/urfave/cli
+  version: cfb38830724cc34fedffe9a2a29fb54fa9169cd1
+- name: golang.org/x/crypto
+  version: aedad9a179ec1ea11b7064c57cbc6dc30d7724ec
   subpackages:
-  - unix
-- name: gopkg.in/yaml.v2
-  version: c1cd2254a6dd314c9d73c338c12688c9325d85c6
+  - ssh/terminal
+- name: golang.org/x/net
+  version: 161cd47e91fd58ac17490ef4d742dc98bb4cf60e
+  subpackages:
+  - context
+  - http/httpguts
+  - http2
+  - http2/hpack
+  - idna
+  - internal/timeseries
+  - trace
+- name: golang.org/x/text
+  version: 4ae1256249243a4eb350a9a372e126557f2aa346
+  subpackages:
+  - secure/bidirule
+  - transform
+  - unicode/bidi
+  - unicode/norm
+- name: google.golang.org/genproto
+  version: f676e0f3ac6395ff1a529ae59a6670878a8371a6
+  subpackages:
+  - googleapis/rpc/status
+- name: google.golang.org/grpc
+  version: b3ddf786825de56a4178401b7e174ee332173b66
+  subpackages:
+  - codes
+  - connectivity
+  - credentials
+  - grpclb/grpc_lb_v1
+  - grpclog
+  - internal
+  - keepalive
+  - metadata
+  - naming
+  - peer
+  - stats
+  - status
+  - tap
+  - transport
 testImports:
 - name: github.com/gopherjs/gopherjs
   version: 4b53e1bddba0e2f734514aeb6c02db652f4c6fe8
